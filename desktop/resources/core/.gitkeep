@@ -1,0 +1,3 @@
+Place a Windows-built aether.exe here (optional) before running `npm run dist`
+to bundle a seed copy inside the installer. If omitted, users will be
+prompted to fetch it from the Update tab or pick one manually on first run.

@@ -1,0 +1,24 @@
+# build output
+node_modules/
+release/
+dist/
+build/
+!desktop/build/
+.gradle/
+.kotlin/
+.idea/
+*.log
+local.properties
+
+# engine binaries are not kept in git (see BINARIES.md); they ship in the release files
+android/app/libs/*.aar
+android/app/src/main/jniLibs/
+desktop/resources/core/*.exe
+desktop/resources/psiphon/*.exe
+desktop/resources/awg/*.exe
+
+# signing keys and secrets never go in the repository
+*.jks
+*.keystore
+keystore.properties
+.env

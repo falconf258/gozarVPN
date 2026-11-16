@@ -1,0 +1,88 @@
+{
+  "name": "gozarvpn",
+  "productName": "GozarVpn",
+  "version": "1.20.1",
+  "description": "GozarVpn — Windows client for Aether, V2ray/Xray, Clash, Tor and Psiphon",
+  "author": "Ali (hermoso)",
+  "license": "See LICENSE",
+  "main": "src/main/index.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "check": "node ./scripts/syntax-check.js",
+    "dist": "electron-builder --win",
+    "dist:dir": "electron-builder --win portable --dir",
+    "publish": "electron-builder --win --publish always"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.3.9",
+    "socks": "^2.8.9",
+    "socks-proxy-agent": "^8.0.5"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "app.gozarvpn.desktop",
+    "productName": "GozarVpn",
+    "copyright": "Copyright © GozarVpn contributors",
+    "asar": true,
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/",
+        "to": "resources/",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "GozarVpn"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "falconf258",
+        "repo": "gozarVPN",
+        "releaseType": "release"
+      }
+    ]
+  }
+}

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self'" />
+<title>GozarVpn</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="appbar">
+      <div class="brand">
+        <div class="fox-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" width="28" height="28">
+            <path fill="var(--accent)" d="M32 4 L54 22 L58 44 L46 40 L44 58 L32 46 L20 58 L18 40 L6 44 L10 22 Z"/>
+            <circle cx="24" cy="26" r="3.2" fill="#0d0d0f"/>
+            <circle cx="40" cy="26" r="3.2" fill="#0d0d0f"/>
+            <path d="M28 34 Q32 38 36 34" stroke="#0d0d0f" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">GozarVpn</div>
+          <div class="brand-sub" id="app-version-sub">GUI</div>
+        </div>
+      </div>
+      <div class="status-pill" id="status-pill">
+        <span class="dot" id="status-dot"></span>
+        <span id="status-text">قطع</span>
+      </div>
+      <!-- Legacy top-bar connect controls: kept (hidden) because app.js
+           still updates them; the dashboard has the real buttons now. -->
+      <div class="connect-bar" hidden>
+        <span id="proxy-addr" class="proxy-addr"></span>
+        <span id="connect-transition-label" class="connect-transition-label" style="display:none"></span>
+        <button id="connect-btn" class="btn primary">اتصال</button>
+        <button id="disconnect-btn" class="btn danger-solid" style="display:none">قطع اتصال</button>
+      </div>
+    </header>
+
+    <nav class="subnav" data-group="aether" style="display:none">
+      <button class="nav-item chip" data-tab="protocol">پروتکل</button>
+      <button class="nav-item chip" data-tab="masque">MASQUE</button>
+      <button class="nav-item chip" data-tab="wireguard">WireGuard</button>
+      <button class="nav-item chip" data-tab="zerotrust">Zero Trust</button>
+      <button class="nav-item chip" data-tab="routing">مسیریابی</button>
+      <button class="nav-item chip" data-tab="advanced">پیشرفته</button>
+      <button class="nav-item chip" data-tab="scanner">اسکنر IP</button>
+    </nav>
+    <nav class="subnav" data-group="configs" style="display:none">
+      <button class="nav-item chip" data-tab="v2ray">V2ray / Xray</button>
+      <button class="nav-item chip" data-tab="mihomo">Clash / mihomo</button>
+      <button class="nav-item chip" data-tab="tor">Tor</button>
+      <button class="nav-item chip" data-tab="psiphon">سایفون</button>
+      <button class="nav-item chip" data-tab="openvpn">OpenVPN</button>
+    </nav>
+    <nav class="subnav" data-group="more" style="display:none">
+      <button class="nav-item chip" data-tab="settings">تنظیمات</button>
+      <button class="nav-item chip" data-tab="update">به‌روزرسانی</button>
+      <button class="nav-item chip" data-tab="about">درباره</button>
+    </nav>
+
+    <main class="content">
+      <section class="tab active" id="tab-dashboard">
+        <div class="hero">
+          <div class="orb-wrap">
+            <span class="orb-halo" aria-hidden="true"></span>
+            <span class="orb-arc" aria-hidden="true"></span>
+            <button class="status-ring" id="status-ring" title="اتصال / قطع">
+              <span class="ring-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></svg></span>
+            </button>
+          </div>
+          <div class="hero-title" id="status-ring-text">قطع</div>
+          <div class="hero-sub"><span id="hero-engine">Aether</span> · <span id="dash-mode">-</span></div>
+          <div class="route-chip" id="route-chip" hidden></div>
+          <div class="hero-uptime mono" id="dash-uptime">-</div>
+          <div id="tunnel-verify-banner" class="tunnel-banner" style="display:none"></div>
+          <div id="tun-badge" class="tun-badge" style="display:none"></div>
+          <div id="ks-banner" class="tun-badge error" style="display:none">🛡 کیل‌سوییچ: اتصال قطع است و اینترنت بقیه‌ی برنامه‌ها مسدود است. دوباره وصل شوید یا <a href="#" id="ks-banner-off">مسدودسازی را بردارید</a>.</div>
+          <div class="dash-connect-row">
+            <button id="dash-connect-btn" class="btn primary big">اتصال</button>
+            <button id="dash-disconnect-btn" class="btn danger-solid big" style="display:none">قطع اتصال</button>
+            <span id="dash-transition-label" class="connect-transition-label" style="display:none"></span>
+          </div>
+        </div>
+
+        <div class="card stats-card">
+          <div class="stats-grid">
+            <div class="stat"><span class="stat-ico ping"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></span><b id="st-ping">—</b><small>پینگ</small></div>
+            <div class="stat"><span class="stat-ico down"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v13M6 11l6 6 6-6M5 20h14"/></svg></span><b id="st-down">—</b><small>دانلود</small><i id="st-down-total"></i></div>
+            <div class="stat"><span class="stat-ico up"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V7M6 13l6-6 6 6M5 4h14"/></svg></span><b id="st-up">—</b><small>آپلود</small><i id="st-up-total"></i></div>
+          </div>
+          <div class="stat-ip"><span class="stat-ip-ico"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg></span><span id="st-ip">آی‌پی خروجی پس از اتصال نمایش داده می‌شود</span></div>
+          <div class="quick-actions">
+            <button class="qa" id="qa-ping" disabled><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg> تست پینگ</button>
+            <button class="qa" id="qa-reconnect" disabled><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg> اتصال دوباره</button>
+          </div>
+        </div>
+
+        <div class="card engine-card">          <div class="seg-label">موتور اتصال</div>
+          <div class="engine-switch" id="engine-switch">
+            <button class="engine-option" data-engine="aether">Aether</button>
+            <button class="engine-option" data-engine="singbox">V2ray</button>
+            <button class="engine-option" data-engine="mihomo">Clash</button>
+            <button class="engine-option" data-engine="tor">Tor</button>
+            <button class="engine-option" data-engine="psiphon">سایفون</button>
+            <button class="engine-option" data-engine="openvpn">OpenVPN</button>
+          </div>
+          <!-- options of the selected engine (filled by app.js); the proxy/TUN mode lives in Settings -->
+          <div id="engine-options" class="engine-options"></div>
+          <p class="muted hint">برای تعویض موتور یا تنظیماتش، ابتدا قطع اتصال کنید. حالت اتصال (پراکسی / TUN) در «بیشتر › تنظیمات» است.</p>
+        </div>
+
+        <div class="card status-card">
+          <h3>جزئیات اتصال</h3>
+          <div class="status-meta">
+            <div><span class="muted" id="dash-protocol-label">پروتکل:</span> <b id="dash-protocol">-</b></div>
+            <div><span class="muted" id="dash-scan-label">اسکن:</span> <b id="dash-scan">-</b></div>
+            <div><span class="muted" id="dash-noize-label">مبهم‌سازی:</span> <b id="dash-noize">-</b></div>
+            <div><span class="muted">SOCKS5 محلی:</span> <b id="dash-addr" class="mono">-</b></div>
+          </div>
+        </div>
+
+        <div class="card" id="quick-presets-card">
+          <h3>انتخاب سریع</h3>
+          <div class="quick-grid" id="quick-presets"></div>
+        </div>
+
+        <div class="card" id="quick-mihomo-card" style="display:none">
+          <h3>سرورهای Clash / mihomo</h3>
+          <div id="dash-mihomo-nodes" class="node-list"><p class="muted">بعد از اتصال، سرورها و پینگشان اینجا نمایش داده می‌شود.</p></div>
+          <div class="btn-row">
+            <button class="btn ghost small" id="dash-mihomo-test">تست دوباره‌ی همه</button>
+            <button class="btn ghost small" id="dash-goto-mihomo">مدیریت پروفایل‌ها</button>
+          </div>
+        </div>
+
+        <div class="card" id="quick-v2ray-card" style="display:none">
+          <h3>کانفیگ فعال V2ray/Xray</h3>
+          <div id="dash-v2ray-active"></div>
+          <button class="btn ghost small" id="dash-goto-v2ray" style="margin-top:10px">مدیریت کانفیگ‌ها</button>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-protocol" data-group="aether">
+        <div class="card profile-card">
+          <div class="profile-bar">
+            <label for="profile-select">پروفایل:</label>
+            <select id="profile-select"></select>
+            <button id="profile-save" class="btn ghost small">ذخیره…</button>
+            <button id="profile-delete" class="btn ghost small danger">حذف</button>
+          </div>
+        </div>
+        <div class="card"><h3>پروتکل و اسکن</h3><div class="form-grid" id="form-protocol"></div></div>
+        <div class="card"><h3>اتصال</h3><div class="form-grid" id="form-connection"></div></div>
+      </section>
+
+      <section class="tab" id="tab-masque" data-group="aether">
+        <div class="card"><h3>تنظیمات MASQUE</h3><div class="form-grid" id="form-masque"></div></div>
+      </section>
+
+      <section class="tab" id="tab-wireguard" data-group="aether">
+        <div class="card"><h3>تنظیمات WireGuard</h3><div class="form-grid" id="form-wireguard"></div></div>
+      </section>
+
+      <section class="tab" id="tab-zerotrust" data-group="aether">
+        <div class="card"><h3>Zero Trust (WARP سازمانی)</h3><div class="form-grid" id="form-zerotrust"></div></div>
+      </section>
+
+      <section class="tab" id="tab-routing" data-group="aether">
+        <div class="card"><h3>قوانین مسیریابی</h3><div class="form-grid" id="form-routing"></div></div>
+      </section>
+
+      <section class="tab" id="tab-advanced" data-group="aether">
+        <div class="card"><h3>پیشرفته</h3><div class="form-grid" id="form-advanced"></div></div>
+      </section>
+
+      <section class="tab" id="tab-scanner" data-group="aether">
+        <div class="card">
+          <h3>اسکنر IP</h3>
+          <p class="muted" style="font-size:13px">
+            این ابزار (<b>CloudflareSpeedTest</b>) آی‌پی‌های Cloudflare را از نظر <b>تاخیر و دسترسی روی پورت TCP/443</b> تست می‌کند —
+            که برای شتاب‌دهی سایت‌های پشت Cloudflare عالی است، اما پروتکل‌های خودِ Aether (MASQUE/WireGuard) روی <b>UDP</b> کار می‌کنند.
+            یعنی سالم‌بودن یک IP در این تست، <b>تضمین نمی‌کند</b> که همان IP روی UDP هم سالم باشد — ولی چون معمولاً هر دو از یک زیرساخت
+            عبور می‌کنند، در عمل شانس خوبی برای پیدا کردن یک Peer اجباری قابل‌استفاده می‌دهد. بعد از اعمال، حتماً از تب داشبورد وصل شوید و تست کنید.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>ابزار اسکنر</h3>
+          <p class="muted">نسخه نصب‌شده: <b id="scanner-version">-</b></p>
+          <div class="btn-row">
+            <button id="scanner-check" class="btn ghost">بررسی/دانلود اسکنر</button>
+          </div>
+          <div id="scanner-update-status" class="update-status"></div>
+          <div class="progress" id="scanner-update-progress"><div class="progress-bar" id="scanner-update-progress-bar"></div></div>
+        </div>
+
+        <div class="card">
+          <h3>اجرای اسکن</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label>تعداد IP که اسکن شود (پیش‌فرض: کل لیست، چند هزارتا)</label>
+              <input type="number" id="scan-max-ips" value="100" min="1">
+            </div>
+            <div class="field">
+              <label>حداکثر تاخیر قابل قبول (ms)</label>
+              <input type="number" id="scan-max-latency" value="800">
+            </div>
+            <div class="field">
+              <label>تعداد نتایج نگه‌داشته‌شود</label>
+              <input type="number" id="scan-count" value="20">
+            </div>
+          </div>
+          <p class="muted" style="font-size:11.5px;margin-top:-6px">
+            ابزار CFST راهی برای «توقف خودکار بعد از پیدا شدن N نتیجه‌ی سالم» ندارد؛ نزدیک‌ترین معادلش محدودکردن تعداد IPِ ورودی (بالا) و تعداد نتایجِ نگه‌داشته‌شده (کنار آن) است.
+          </p>
+          <div class="btn-row">
+            <button id="scan-start" class="btn primary">شروع اسکن</button>
+            <button id="scan-cancel" class="btn ghost" disabled>لغو</button>
+            <button id="scan-import" class="btn ghost">ایمپورت فایل (ips.txt / CSV)</button>
+          </div>
+          <div id="scan-status" class="update-status"></div>
+          <div id="scan-console" class="log-console" style="max-height:120px;display:none"></div>
+        </div>
+
+        <div class="card">
+          <div class="logs-toolbar" style="margin-bottom:10px">
+            <h3 style="margin:0">نتایج</h3>
+            <div class="spacer"></div>
+            <button id="scan-clear-peer" class="btn ghost small danger">پاک کردن Peer اجباری</button>
+          </div>
+          <p class="muted" style="font-size:11.5px;margin-top:-6px">
+            هشدار: این تست فقط دسترسی TCP:443 را می‌سنجد، نه پروتکل واقعی MASQUE/WARP. اگر بعد از اعمال یک IP، اتصال موتور Aether وارد چرخه‌ی «در حال اتصال مجدد» بی‌پایان شد، همین دکمه را بزنید تا Peer اجباری پاک شود و Aether به اسکن خودکار خودش برگردد.
+          </p>
+          <div id="scan-results"></div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-v2ray" data-group="configs">
+        <div class="card">
+          <h3>ضد DPI هوشمند</h3>
+          <label class="check-row"><input type="checkbox" id="v2ray-dpi-smart"> هنگام اتصال چند روش تکه‌کردن دست‌دادن TLS را با یک تست واقعی امتحان کن و روشی را که جواب داد برای همان سرور نگه دار</label>
+          <p class="muted" style="font-size:11.5px">فقط روی سرورهای TLS و REALITY اثر دارد. اگر برای کانفیگی فرگمنت را دستی تنظیم کرده باشید، تنظیم دستی شما برنده است. اتصال اول ممکن است چند ثانیه بیشتر طول بکشد.</p>
+        </div>
+        <div class="card">
+          <h3>هسته‌ی sing-box</h3>
+          <p class="muted" style="font-size:12.5px">
+            موتور دومِ اتصال، برای پروفایل‌های VLESS، VMess، Trojan، Shadowsocks و WireGuard (فایل <code>.conf</code>). کاملاً جدا از هسته‌ی Aether است و باید یک‌بار دانلود شود.
+          </p>
+          <p class="muted">نسخه نصب‌شده: <b id="singbox-version">-</b></p>
+          <div class="btn-row">
+            <button id="singbox-check" class="btn ghost">بررسی/دانلود sing-box</button>
+            <button id="singbox-manual" class="btn ghost">انتخاب دستی فایل exe</button>
+          </div>
+          <div id="singbox-update-status" class="update-status"></div>
+          <div class="progress" id="singbox-update-progress"><div class="progress-bar" id="singbox-update-progress-bar"></div></div>
+        </div>
+
+        <div class="card">
+          <h3>افزودن کانفیگ از لینک سابسکریپشن</h3>
+          <p class="muted" style="font-size:12.5px">
+            آدرس لینک سابسکریپشن (مثلاً از پنل BPB یا هر پنل دیگر) را اینجا بچسبانید — همه‌ی کانفیگ‌های داخلش خودکار خوانده و اضافه می‌شوند.
+          </p>
+          <div class="field-file">
+            <input type="text" id="v2ray-sub-name" placeholder="نام سابسکریپشن (اختیاری)">
+            <input type="text" id="v2ray-sub-url" placeholder="https://.../sub/normal?app=xray">
+            <button id="v2ray-sub-fetch-btn" class="btn primary">دریافت و افزودن</button>
+          </div>
+          <div id="v2ray-sub-status" class="update-status"></div>
+        </div>
+
+        <div class="card">
+          <h3>WARP رایگان Cloudflare</h3>
+          <p class="muted" style="font-size:12.5px">
+            یک اکانت WARP رایگان می‌سازد و به‌صورت کانفیگ WireGuard در همین لیست اضافه می‌کند. برای ساخت اکانت به اینترنت (یا یک اتصال فعال مثل Aether) نیاز است. اگر روی شبکه‌ی شما وصل نشد، از روش‌های دیگر هم می‌توان پورت یا IP را عوض کرد.
+          </p>
+          <div class="btn-row"><button id="v2ray-warp-btn" class="btn primary">ساخت و افزودن WARP</button></div>
+          <div id="v2ray-warp-status" class="update-status"></div>
+        </div>
+
+        <div class="card">
+          <h3>افزودن کانفیگ با لینک مستقیم یا فایل WireGuard</h3>
+          <p class="muted" style="font-size:12.5px">
+            یک یا چند لینک اشتراک‌گذاری (<code>vless://</code>, <code>vmess://</code>, <code>trojan://</code>, <code>ss://</code>, <code>wireguard://</code>) یا محتوای کامل یک فایل <code>.conf</code> ویندوز/WireGuard (شامل <code>[Interface]</code> و <code>[Peer]</code>) را اینجا بچسبانید.
+          </p>
+          <input type="text" id="v2ray-import-name" placeholder="نام گروه (اختیاری)" style="width:100%;margin-bottom:8px">
+          <textarea id="v2ray-import-text" placeholder="vless://... یا محتوای فایل .conf" style="width:100%;min-height:90px"></textarea>
+          <div class="btn-row">
+            <button id="v2ray-import-conf-file-btn" class="btn ghost">انتخاب فایل .conf</button>
+          </div>
+          <p class="muted" style="font-size:11.5px;margin-top:-4px">
+            ⚠️ فایل‌های AmneziaWG هم پذیرفته می‌شوند، ولی پارامترهای مبهم‌سازی مخصوص آن (Jc/Jmin/H1...) نادیده گرفته می‌شوند و کانفیگ به‌صورت WireGuard معمولی وصل می‌شود — چون هسته‌ی رسمی sing-box که استفاده می‌کنیم از AmneziaWG پشتیبانی نمی‌کند.
+          </p>
+          <label class="check-row"><input type="checkbox" id="v2ray-record-fragment" checked> فرگمنت‌کردن TLS ClientHello (پیشنهادی — برای دور زدن مسدودسازی فعال، بدون نیاز به دسترسی مدیر)</label>
+          <label class="check-row"><input type="checkbox" id="v2ray-fragment"> فرگمنت کامل بسته‌ها (قوی‌تر ولی ممکن است در ویندوز نیاز به اجرا با دسترسی Administrator داشته باشد)</label>
+          <div class="btn-row">
+            <button id="v2ray-import-btn" class="btn primary">افزودن</button>
+          </div>
+          <div id="v2ray-import-status" class="update-status"></div>
+        </div>
+
+        <div class="card">
+          <div class="logs-toolbar" style="margin-bottom:10px">
+            <h3 style="margin:0">کانفیگ‌های ذخیره‌شده</h3>
+            <div class="spacer"></div>
+            <button id="v2ray-sort-ping" class="btn ghost small" title="مرتب‌سازی بر اساس کمترین پینگ">↕ پینگ</button>
+            <button id="v2ray-test-all" class="btn ghost small">تست همه (پینگ)</button>
+          </div>
+          <p class="muted" style="font-size:11.5px;margin:0 0 8px">تست واقعی: از هر سرور یک درخواست HTTPS واقعی رد می‌شود و زمان پاسخ نمایش داده می‌شود (سرور خراب «ناموفق» می‌شود). برای فهرست‌های بزرگ چند دقیقه طول می‌کشد.</p>
+          <div id="v2ray-test-warning" class="tunnel-banner failed" hidden></div>
+          <div id="v2ray-test-progress" class="test-progress" hidden>
+            <div class="tp-row">
+              <span id="v2ray-test-progress-text"></span>
+              <button id="v2ray-test-cancel" class="btn ghost small danger" hidden>⏹ توقف</button>
+            </div>
+            <div class="tp-track"><div id="v2ray-test-progress-bar" class="tp-bar"></div></div>
+          </div>
+          <div id="v2ray-config-list"></div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-tor" data-group="configs">
+        <div class="card">
+          <h3>Tor (موتور چهارم)</h3>
+          <p class="muted" style="font-size:12.5px">
+            شبکه‌ی Tor از طریق پل‌های (bridge) تست‌شده وصل می‌شود تا در شبکه‌های فیلترشده هم کار کند. سرعتش از VPN معمولی کمتر است، ولی هویت شما را بیشتر پنهان می‌کند. هسته‌ی رسمی Tor Expert Bundle دانلود و با امضای SHA-256 بررسی می‌شود.
+          </p>
+          <p class="muted">نسخه نصب‌شده: <b id="tor-version">-</b></p>
+          <div class="btn-row">
+            <button id="tor-install" class="btn ghost">دانلود Tor</button>
+            <button id="tor-manual" class="btn ghost">انتخاب دستی فایل tar.gz</button>
+          </div>
+          <div id="tor-install-status" class="update-status"></div>
+          <div class="progress" id="tor-install-progress"><div class="progress-bar" id="tor-install-progress-bar"></div></div>
+        </div>
+        <div class="card">
+          <h3>روش اتصال و پل‌ها</h3>
+          <div class="field">
+            <label>روش اتصال</label>
+            <select id="tor-mode">
+              <option value="auto">خودکار (obfs4 + webtunnel + مستقیم)</option>
+              <option value="obfs4">obfs4</option>
+              <option value="webtunnel">webtunnel</option>
+              <option value="snowflake">snowflake (کند ولی سخت‌گیر در برابر فیلتر)</option>
+              <option value="vanilla">پل ساده (بدون پنهان‌سازی)</option>
+            </select>
+          </div>
+          <p class="muted" style="font-size:12.5px" id="tor-bridge-info"></p>
+          <div class="btn-row">
+            <button id="tor-bridges-update" class="btn ghost">به‌روزرسانی پل‌ها</button>
+          </div>
+          <div id="tor-bridges-status" class="update-status"></div>
+          <p class="muted" style="font-size:11.5px">پل‌ها از ریپوی Tor-Bridges-Collector گرفته می‌شوند (هر ساعت تست می‌شوند). یک نسخه‌ی اولیه همراه برنامه هست.</p>
+        </div>
+        <div class="card">
+          <h3>پل‌های دلخواه</h3>
+          <p class="muted" style="font-size:12px">پل‌هایی که از bridges.torproject.org، ربات تلگرام یا ایمیل گرفته‌اید را اینجا بچسبانید؛ هر خط یک پل (obfs4، webtunnel، snowflake، meek یا پل ساده). «Bridge» اول خط لازم نیست.</p>
+          <textarea id="tor-custom" dir="ltr" placeholder="obfs4 1.2.3.4:443 FINGERPRINT cert=... iat-mode=0" style="width:100%;min-height:96px;font-family:Consolas,monospace;font-size:12px"></textarea>
+          <label class="check-row"><input type="checkbox" id="tor-only-mine"> فقط پل‌های من (به‌جای فهرست همراه برنامه)</label>
+          <div class="btn-row"><button id="tor-custom-save" class="btn primary small">ذخیره</button><span class="muted" id="tor-custom-count" style="font-size:12px"></span></div>
+          <div id="tor-custom-result" class="bridge-result"></div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-psiphon" data-group="configs">
+        <div class="card">
+          <h3>سایفون</h3>
+          <p class="muted" style="font-size:12.5px">سایفون با همان هسته‌ی Aether اجرا می‌شود و حساب جداگانه لازم ندارد. در خانه موتور «سایفون» را انتخاب و وصل کنید؛ شروع اول ممکن است یکی دو دقیقه طول بکشد.</p>
+          <div id="psiphon-core-status" class="update-status"></div>
+        </div>
+        <div class="card">
+          <h3>تنظیمات</h3>
+          <div class="field">
+            <label>مسیر</label>
+            <select id="psiphon-route">
+              <option value="aether">از طریق Aether (WARP)</option>
+              <option value="only">فقط سایفون (بدون WARP)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>روش اتصال</label>
+            <select id="psiphon-mode">
+              <option value="auto">خودکار</option>
+              <option value="cdn">فقط از طریق CDN (برای شبکه‌های سخت‌گیر)</option>
+              <option value="direct">مستقیم</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>کشور خروجی</label>
+            <select id="psiphon-region">
+              <option value="">سریع‌ترین</option>
+              <option value="DE">DE · آلمان</option><option value="NL">NL · هلند</option><option value="GB">GB · انگلیس</option>
+              <option value="FR">FR · فرانسه</option><option value="US">US · آمریکا</option><option value="CA">CA · کانادا</option>
+              <option value="SE">SE · سوئد</option><option value="FI">FI · فنلاند</option><option value="AT">AT · اتریش</option>
+              <option value="CH">CH · سوئیس</option><option value="SG">SG · سنگاپور</option><option value="JP">JP · ژاپن</option>
+            </select>
+          </div>
+          <p class="muted" style="font-size:11.5px">«از طریق Aether» وقتی سرورهای سایفون مستقیم باز نمی‌شوند بهتر است. همه‌ی کشورها همیشه در دسترس نیستند؛ کشورهای در دسترس هنگام اتصال در لاگ می‌آید (AvailableEgressRegions).</p>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-openvpn" data-group="configs">
+        <div class="card">
+          <h3>OpenVPN</h3>
+          <p class="muted" style="font-size:12.5px">فایل‌های .ovpn (مثلاً از گروه‌های تلگرام) را اضافه کنید. اتصال با برنامه‌ی رسمی OpenVPN انجام می‌شود که تونل کل سیستم را خودش می‌سازد؛ حالت TUN / پراکسی برنامه برای آن استفاده نمی‌شود و به دسترسی Administrator نیاز دارد.</p>
+          <div id="openvpn-exe-status" class="update-status"></div>
+          <div class="row-actions" style="gap:8px;flex-wrap:wrap">
+            <button id="openvpn-install" class="btn ghost small">دانلود و نصب OpenVPN رسمی</button>
+            <button id="openvpn-pick" class="btn ghost small">انتخاب openvpn.exe</button>
+          </div>
+          <div class="progress" id="openvpn-install-progress"><div class="progress-bar" id="openvpn-install-progress-bar"></div></div>
+        </div>
+        <div class="card">
+          <h3>کانفیگ‌ها</h3>
+          <div class="row-actions" style="gap:8px;flex-wrap:wrap">
+            <button id="openvpn-add-file" class="btn primary small">افزودن فایل .ovpn</button>
+            <button id="openvpn-add-clip" class="btn ghost small">از کلیپ‌بورد</button>
+          </div>
+          <p class="muted" id="openvpn-add-status" style="font-size:12px"></p>
+          <div id="openvpn-list"></div>
+          <p class="muted" style="font-size:11.5px">• «تست» یک دست‌دادن واقعی با سرور انجام می‌دهد (بدون تغییر در شبکه).<br>• OpenVPN در ایران راحت شناسایی و مسدود می‌شود؛ بسیاری از کانفیگ‌ها فقط روی بعضی اپراتورها کار می‌کنند. کانفیگ‌های TCP روی پورت 443 شانس بیشتری دارند.<br>• «ایران مستقیم» با OpenVPN بر اساس IP کار می‌کند (محدوده‌های IP ایران و IPهای لیست مستقیم)، نه دامنه.<br>• برای امنیت، دستورهای اجرای برنامه (up/down/script…) از فایل حذف می‌شوند.</p>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-mihomo" data-group="configs">
+        <div class="card">
+          <h3>هسته‌ی mihomo (Clash.Meta)</h3>
+          <p class="muted" style="font-size:12.5px">
+            موتور سوم، همان هسته‌ای که WhiteVPN استفاده می‌کند. هر نوع سابسکریپشن را می‌خواند: Clash YAML، base64 و لینک‌های vless/vmess/trojan/ss/hysteria2/tuic. همه‌ی سرورهای سابسکریپشن داخل یک گروه می‌روند و mihomo خودش سریع‌ترین سرور سالم را انتخاب می‌کند.
+          </p>
+          <p class="muted">نسخه نصب‌شده: <b id="mihomo-version">-</b></p>
+          <div class="btn-row">
+            <button id="mihomo-check" class="btn ghost">دانلود/به‌روزرسانی mihomo</button>
+            <button id="mihomo-manual" class="btn ghost">انتخاب دستی exe</button>
+          </div>
+          <div id="mihomo-update-status" class="update-status"></div>
+          <div class="progress" id="mihomo-update-progress"><div class="progress-bar" id="mihomo-update-progress-bar"></div></div>
+        </div>
+
+        <div class="card">
+          <h3>افزودن پروفایل</h3>
+          <div class="field">
+            <label>لینک سابسکریپشن</label>
+            <div class="field-file">
+              <input type="text" id="mihomo-sub-url" placeholder="https://.../sub?flag=clash">
+              <button id="mihomo-sub-add" class="btn primary">افزودن</button>
+            </div>
+          </div>
+          <div class="field" style="margin-top:12px">
+            <label>یا محتوای سابسکریپشن / فایل YAML را بچسبانید</label>
+            <textarea id="mihomo-text" placeholder="proxies:&#10;  - name: ...&#10;یا vless://... هر خط یکی"></textarea>
+          </div>
+          <div class="field" style="margin-top:12px">
+            <label>انتخاب سرور</label>
+            <select id="mihomo-group-type">
+              <option value="url-test">خودکار: سریع‌ترین سرور</option>
+              <option value="fallback">خودکار: اولین سرور سالم (fallback)</option>
+              <option value="load-balance">پخش بار بین سرورها</option>
+              <option value="select">دستی</option>
+            </select>
+          </div>
+          <div class="btn-row">
+            <button id="mihomo-text-add" class="btn ghost">افزودن از متن</button>
+          </div>
+          <div id="mihomo-add-status" class="update-status"></div>
+        </div>
+
+        <div class="card">
+          <h3>پروفایل‌های ذخیره‌شده</h3>
+          <div id="mihomo-profile-list"></div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-logs">
+        <div class="card logs-card">
+          <div class="logs-toolbar">
+            <h3>لاگ زنده</h3>
+            <div class="spacer"></div>
+            <button id="logs-copy" class="btn ghost small">کپی لاگ</button>
+            <button id="logs-save" class="btn ghost small">ذخیره لاگ</button>
+            <button id="logs-clear" class="btn ghost small">پاک کردن</button>
+          </div>
+          <div id="log-console" class="log-console"></div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-update" data-group="more">
+        <div class="dash-grid">
+          <div class="card">
+            <h3>هسته‌ی اتصال (aether.exe)</h3>
+            <p class="muted">نسخه نصب‌شده: <b id="core-version">-</b></p>
+            <div class="btn-row">
+              <button id="core-check" class="btn ghost">بررسی به‌روزرسانی هسته</button>
+              <button id="core-update-btn" class="btn primary" disabled>به‌روزرسانی هسته</button>
+              <button id="core-manual" class="btn ghost">انتخاب دستی فایل (zip / exe)</button>
+            </div>
+            <div id="core-update-status" class="update-status"></div>
+            <div class="progress" id="core-progress"><div class="progress-bar" id="core-progress-bar"></div></div>
+            <pre id="core-changelog" class="changelog"></pre>
+            <p class="muted" style="font-size:12px;margin-top:10px">
+              اگر دانلود از داخل برنامه نشد، فایل <code>aether-windows-x86_64.zip</code> را از صفحه‌ی انتشار رسمی Aether بگیرید و با دکمه‌ی «انتخاب دستی فایل» همان zip (یا فقط aether.exe) را بدهید؛ zip کامل بهتر است چون سایفون و lyrebird هم داخلش هست.
+            </p>
+          </div>
+
+          <div class="card">
+            <h3>خود برنامه (GUI)</h3>
+            <p class="muted">نسخه فعلی: <b id="gui-version">-</b></p>
+            <div class="btn-row">
+              <button id="app-check" class="btn ghost">بررسی به‌روزرسانی</button>
+              <button id="app-download" class="btn primary" disabled>دانلود</button>
+              <button id="app-install" class="btn primary" disabled>نصب و راه‌اندازی مجدد</button>
+            </div>
+            <div id="app-update-status" class="update-status"></div>
+            <div class="progress" id="app-progress"><div class="progress-bar" id="app-progress-bar"></div></div>
+            <pre id="app-update-notes" class="muted" style="display:none;white-space:pre-wrap;font-family:inherit;font-size:12px;max-height:180px;overflow:auto;margin:8px 0"></pre>
+            <label class="check-row"><input type="checkbox" id="ui-auto-update-check"> بررسی خودکار هنگام باز شدن برنامه</label>
+            <label class="check-row"><input type="checkbox" id="ui-update-beta"> نسخه‌های آزمایشی هم نشان داده شود</label>
+            <p class="muted" style="font-size:11.5px;margin:4px 0">از GitHub دانلود می‌شود (اگر مستقیم باز نشد، از طریق اتصال فعلی VPN) و فایل با SHA256SUMS.txt همان نسخه بررسی می‌شود. نسخه‌ی پرتابل جایگزین خودش نمی‌شود؛ فایل جدید کنار همین فایل ذخیره و نشان داده می‌شود.</p>
+            <button id="app-releases" class="btn ghost small">صفحه‌ی انتشارها در GitHub</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-settings" data-group="more">
+        <div class="card">
+          <h3>مسیر ترافیک</h3>
+          <div class="field">
+            <label for="routing-mode">کدام ترافیک از VPN برود؟</label>
+            <select id="routing-mode">
+              <option value="iran">ایران مستقیم، بقیه از VPN (پیشنهادی)</option>
+              <option value="all">همه از VPN</option>
+              <option value="custom">فقط لیست من از VPN</option>
+            </select>
+          </div>
+          <p class="muted" style="font-size:12px" id="routing-hint"></p>
+          <div class="field">
+            <label for="routing-direct">همیشه مستقیم (هر خط یک دامنه یا آی‌پی)</label>
+            <textarea id="routing-direct" placeholder="example.com&#10;5.6.0.0/16" style="min-height:64px"></textarea>
+          </div>
+          <div class="field">
+            <label for="routing-proxy">همیشه از VPN (هر خط یک دامنه یا آی‌پی)</label>
+            <textarea id="routing-proxy" placeholder="telegram.org" style="min-height:64px"></textarea>
+          </div>
+          <p class="muted" style="font-size:11.5px">example.com زیردامنه‌ها را هم می‌گیرد. لیست «همیشه از VPN» بر بقیه اولویت دارد. تغییرها از اتصال بعدی اعمال می‌شوند.</p>
+          <div class="btn-row">
+            <button id="routing-update" class="btn ghost small">به‌روزرسانی قوانین ایران</button>
+            <span class="muted" style="font-size:12px" id="routing-version"></span>
+          </div>
+          <div class="field">
+            <label for="routing-test-host">این دامنه از کجا می‌رود؟</label>
+            <div class="field-file">
+              <input type="text" id="routing-test-host" placeholder="مثلاً bmi.ir">
+              <button id="routing-test" class="btn ghost small">بررسی</button>
+            </div>
+          </div>
+          <div id="routing-test-result" class="update-status"></div>
+        </div>
+        <div class="card">
+          <h3>حالت اتصال</h3>
+          <div class="engine-switch" id="mode-switch" style="margin-bottom:10px">
+            <button class="engine-option" data-mode="proxy">پراکسی سیستم</button>
+            <button class="engine-option" data-mode="tun">TUN (کل سیستم)</button>
+          </div>
+          <label class="check-row"><input type="checkbox" id="ui-tun-mode"> استفاده از TUN به‌جای پراکسی سیستم</label>
+          <p class="muted" style="font-size:12px;margin:-6px 0 10px">
+            یک کارت شبکه‌ی مجازی (Wintun) ساخته می‌شود و <b>همه‌ی برنامه‌ها</b> (بازی، تلگرام دسکتاپ، ترمینال و…) بدون نیاز به تنظیم پراکسی از تونل رد می‌شوند. برای هر دو موتور کار می‌کند، ولی به هسته‌ی sing-box (تب کانفیگ‌ها) و دسترسی Administrator نیاز دارد. TUN فقط بعد از تأیید سالم‌بودن تونل فعال می‌شود.
+          </p>
+          <p class="muted" id="admin-status" style="font-size:12px"></p>
+          <button id="relaunch-admin" class="btn ghost small">اجرای مجدد با دسترسی مدیر</button>
+        </div>
+        <div class="card">
+          <h3>کیل‌سوییچ</h3>
+          <label class="check-row"><input type="checkbox" id="ui-kill-switch"> اگر اتصال قطع شد، اینترنت بقیه‌ی برنامه‌ها هم قطع شود</label>
+          <p class="muted" style="font-size:12px;margin:-6px 0 10px">
+            هنگام اتصال، با قوانین فایروال ویندوز همه‌ی ترافیک خروجی بسته می‌شود به‌جز خود GozarVpn و هسته‌هایش، شبکه‌ی محلی (مودم، پرینتر) و آداپتور TUN. اگر موتور از کار بیفتد، هیچ برنامه‌ای بیرون از VPN به اینترنت نمی‌رود تا وقتی «قطع اتصال» را بزنید. با قطع اتصال یا بستن برنامه قوانین برداشته می‌شوند.
+          </p>
+          <p class="muted" style="font-size:12px;margin:-6px 0 10px">
+            ⚠ به دسترسی Administrator نیاز دارد و تا وقتی فعال است، فایروال ویندوز را روشن نگه می‌دارد. در حالت پراکسی سیستم، برنامه‌هایی که از پراکسی استفاده نمی‌کنند اینترنت نخواهند داشت. سایت‌های ایرانی (ایران مستقیم) از مسیر خود GozarVpn می‌روند و کار می‌کنند.
+          </p>
+          <p class="muted" id="ks-status" style="font-size:12px"></p>
+          <button id="ks-emergency" class="btn ghost small">اضطراری: حذف قوانین</button>
+        </div>
+        <div class="card">
+          <h3>تنظیمات برنامه</h3>
+          <label class="check-row"><input type="checkbox" id="ui-auto-proxy"> تنظیم خودکار پراکسی سیستم هنگام اتصال (توصیه‌شده)</label>
+          <p class="muted" style="font-size:12px;margin:-6px 0 10px">
+            بدون این گزینه، تانل فقط یک پراکسی SOCKS5 محلی بالا می‌آورد ولی هیچ برنامه‌ای به‌طور خودکار از آن استفاده نمی‌کند و فیلترینگ دور زده نمی‌شود.
+          </p>
+          <label class="check-row"><input type="checkbox" id="ui-socks-only-proxy"> پراکسی سیستم فقط SOCKS5 باشد (بدون HTTP/HTTPS)</label>
+          <p class="muted" style="font-size:12px;margin:-6px 0 10px">
+            پیشرفته/عیب‌یابی: اگر با موتور V2ray/Xray سایت‌ها قطع می‌شوند با اینکه تست پینگ موفق بود، این گزینه را امتحان کنید. توجه: با بعضی برنامه‌ها ممکن است پراکسی فقط-SOCKS اصلاً استفاده نشود.
+          </p>
+          <label class="check-row"><input type="checkbox" id="ui-launch-startup"> اجرای خودکار هنگام روشن شدن ویندوز</label>
+          <label class="check-row"><input type="checkbox" id="ui-start-minimized"> شروع به‌صورت مینیمایز (Tray)</label>
+          <div class="field" style="margin-top:10px">
+            <label for="ui-close-action">وقتی روی ضربدر پنجره کلیک می‌کنم</label>
+            <select id="ui-close-action">
+              <option value="ask">هر بار بپرس</option>
+              <option value="tray">برو به تسک‌بار (Tray)</option>
+              <option value="quit">برنامه کاملاً بسته شود</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-about" data-group="more">
+        <div class="card" style="text-align:center">
+          <div class="fox-mark" style="margin:0 auto 10px">
+            <svg viewBox="0 0 64 64" width="56" height="56">
+              <path fill="var(--accent)" d="M32 4 L54 22 L58 44 L46 40 L44 58 L32 46 L20 58 L18 40 L6 44 L10 22 Z"/>
+              <circle cx="24" cy="26" r="3.2" fill="#0d0d0f"/>
+              <circle cx="40" cy="26" r="3.2" fill="#0d0d0f"/>
+              <path d="M28 34 Q32 38 36 34" stroke="#0d0d0f" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3 style="margin-bottom:2px">GozarVpn</h3>
+          <p class="muted" style="margin-top:0">نسخه <span id="about-version">-</span></p>
+          <p style="max-width:480px;margin:12px auto;font-size:13.5px">
+            این برنامه توسط <b>Ali (hermoso)</b> ساخته و نگه‌داری می‌شود.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>ارتباط با سازنده</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label>تلگرام</label>
+              <input type="text" id="about-telegram" value="@falconf2" readonly>
+            </div>
+            <div class="field">
+              <label>ایمیل</label>
+              <input type="text" id="about-email" value="blackidea09@gmail.com" readonly>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>درباره‌ی هسته و اسکنر</h3>
+          <p class="muted" style="font-size:12.5px">
+            هسته‌ی اتصال (aether.exe) و اسکنر IP (CloudflareSpeedTest) پروژه‌های جداگانه و متن‌بازِ اشخاص دیگر هستند که این برنامه فقط رابط گرافیکی برایشان فراهم می‌کند؛ GozarVpn مالکیتی روی آن‌ها ندارد.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" id="nav">
+      <button class="nav-item active" data-tab="dashboard"><svg class="ni" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>خانه</span></button>
+      <button class="nav-item" data-tab="configs"><svg class="ni" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><circle cx="7" cy="7" r=".6" fill="currentColor"/><circle cx="7" cy="17" r=".6" fill="currentColor"/></svg><span>کانفیگ‌ها</span></button>
+      <button class="nav-item" data-tab="aether"><svg class="ni" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg><span>Aether</span></button>
+      <button class="nav-item" data-tab="logs"><svg class="ni" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg><span>لاگ</span></button>
+      <button class="nav-item" data-tab="more"><svg class="ni" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span>بیشتر</span></button>
+    </nav>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

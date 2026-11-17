@@ -41,7 +41,7 @@ fun SplitTunnelCard(vm: AppViewModel, app: AppState, connected: Boolean, onRecon
             if (connected) changedWhileConnected = true
         }
         Hint(when (s.perAppMode) {
-            "only" -> if (s.perAppPackages.isEmpty()) "هنوز برنامه‌ای انتخاب نشده؛ تا وقتی انتخاب نکنید، همه‌ی برنامه‌ها از VPN رد می‌شوند." else "فقط ${s.perAppPackages.size} برنامه‌ی انتخاب‌شده از VPN رد می‌شوند؛ بقیه مستقیم وصل می‌شوند."
+            "only" -> if (s.perAppPackages.isEmpty()) "هنوز برنامه‌ای انتخاب نکرده‌اید. تا وقتی انتخاب نکنید، همه‌ی برنامه‌ها از VPN می‌روند." else "فقط ${s.perAppPackages.size} برنامه‌ی انتخاب‌شده از VPN رد می‌شوند؛ بقیه مستقیم وصل می‌شوند."
             "except" -> "همه‌ی برنامه‌ها از VPN رد می‌شوند، به‌جز ${s.perAppPackages.size} برنامه‌ی انتخاب‌شده (مثلاً برنامه‌های بانکی)."
             else -> "همه‌ی برنامه‌ها از VPN رد می‌شوند."
         })

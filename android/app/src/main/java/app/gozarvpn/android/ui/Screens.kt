@@ -83,7 +83,7 @@ fun PsiphonScreen(vm: AppViewModel, app: AppState) {
         GCard {
             H("مسیر")
             ChoiceChips(listOf("aether" to "از طریق Aether (WARP)", "only" to "فقط سایفون"), s.psiphonRoute) { v -> vm.repo.updateSettings { it.copy(psiphonRoute = v) } }
-            Hint("«از طریق Aether»: اول تونل WARP ساخته می‌شود و سایفون داخل آن وصل می‌شود؛ وقتی سرورهای سایفون مستقیم باز نمی‌شوند بهتر است. «فقط سایفون»: بدون WARP و معمولاً سریع‌تر برای شروع.")
+            Hint("«از طریق Aether»: اول WARP وصل می‌شود و سایفون از داخلش می‌رود. وقتی سرورهای سایفون مستقیم باز نمی‌شوند، این بهتر است. «فقط سایفون» بدون WARP است و معمولاً زودتر وصل می‌شود.")
         }
         GCard {
             H("روش اتصال سایفون")
@@ -95,9 +95,9 @@ fun PsiphonScreen(vm: AppViewModel, app: AppState) {
             ChoiceChips(listOf("" to "سریع‌ترین") + listOf("DE", "NL", "GB", "FR", "US", "CA", "SE", "FI", "AT", "SG", "JP").map { it to "${flag(it)} $it" }, s.psiphonRegion) { v ->
                 vm.repo.updateSettings { it.copy(psiphonRegion = v) }
             }
-            Hint("همه‌ی کشورها همیشه در دسترس نیستند؛ کشورهای در دسترس هنگام اتصال در لاگ می‌آید (AvailableEgressRegions).")
+            Hint("همیشه همه‌ی کشورها در دسترس نیستند. کشورهایی که موجودند موقع اتصال در لاگ می‌آیند (AvailableEgressRegions).")
         }
-        Hint("شروع اول سایفون ممکن است یکی دو دقیقه طول بکشد؛ پیشرفت در تب لاگ دیده می‌شود.")
+        Hint("بار اول ممکن است وصل شدن سایفون یکی دو دقیقه طول بکشد. پیشرفتش را در تب لاگ می‌بینید.")
     }
 }
 
@@ -116,7 +116,7 @@ fun AetherScreen(vm: AppViewModel, app: AppState) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         GCard {
             H("هسته‌ی Aether")
-            Hint("همان هسته‌ی WARP/MASQUE نسخه‌ی ویندوز. برای استفاده، در خانه موتور Aether را انتخاب و وصل کنید. اولین اتصال ممکن است تا یک دقیقه طول بکشد (اسکن و ثبت WARP)؛ پیشرفت در تب لاگ دیده می‌شود.")
+            Hint("همان هسته‌ی WARP/MASQUE نسخه‌ی ویندوز است. در خانه موتور Aether را انتخاب کنید و وصل شوید. اتصال اول ممکن است تا یک دقیقه طول بکشد، چون باید اسکن کند و WARP را ثبت کند. پیشرفتش در تب لاگ هست.")
         }
         val set: ((Settings) -> Settings) -> Unit = { f -> vm.repo.updateSettings(f) }
         GCard {
@@ -125,7 +125,7 @@ fun AetherScreen(vm: AppViewModel, app: AppState) {
                 listOf("smart" to "هوشمند", "masque" to "MASQUE", "wireguard" to "WireGuard", "gool" to "WARP×2"),
                 s.aetherProtocol,
             ) { v -> set { it.copy(aetherProtocol = v) } }
-            Hint("هوشمند: به‌ترتیب MASQUE، WireGuard و WARP×2 (WARP داخل WARP) را امتحان می‌کند و اولین پروتکلی که واقعاً ترافیک رد کند را نگه می‌دارد.")
+            Hint("حالت هوشمند MASQUE، WireGuard و WARP×2 (WARP داخل WARP) را به ترتیب امتحان می‌کند و اولین موردی را که واقعاً کار کرد نگه می‌دارد.")
             H("حالت اسکن")
             ChoiceChips(
                 listOf("turbo" to "سریع", "balanced" to "متعادل", "thorough" to "کامل", "stealth" to "مخفی", "ironclad" to "ironclad"),
@@ -141,7 +141,7 @@ fun AetherScreen(vm: AppViewModel, app: AppState) {
                 listOf("off" to "خاموش", "light" to "سبک", "balanced" to "متعادل", "aggressive" to "قوی"),
                 s.aetherNoize.let { if (it == "strong") "aggressive" else it },
             ) { v -> set { it.copy(aetherNoize = v) } }
-            Hint("بسته‌های بی‌معنی و دست‌دادن جعلی اضافه می‌کند تا DPI تونل را تشخیص ندهد.")
+            Hint("بسته‌های بی‌معنی و دست‌دادن جعلی می‌فرستد تا DPI تونل را نشناسد.")
             H("Endpoint")
             var manual by remember(s.aetherPeer) { mutableStateOf(s.aetherPeer.isNotBlank()) }
             ChoiceChips(listOf("auto" to "اسکن خودکار", "manual" to "IP دستی"), if (manual) "manual" else "auto") { v ->
@@ -154,7 +154,7 @@ fun AetherScreen(vm: AppViewModel, app: AppState) {
                 SettingField("اندازه‌ی تکه‌ها (مثلاً 10-60)", s.aetherFragSize) { v -> set { it.copy(aetherFragSize = v) } }
                 SettingField("تأخیر بین تکه‌ها، میلی‌ثانیه (مثلاً 5-20)", s.aetherFragDelay) { v -> set { it.copy(aetherFragDelay = v) } }
             }
-            SettingSwitch("Encrypted Client Hello (ECH)", "نام مقصد (SNI) را از DPI پنهان می‌کند. ممکن است در ایران کار نکند؛ اگر هسته خطای ECH داد، خودکار بدون آن امتحان می‌شود", s.aetherEch) { v -> set { it.copy(aetherEch = v) } }
+            SettingSwitch("Encrypted Client Hello (ECH)", "اسم سایت مقصد (SNI) را از DPI پنهان می‌کند. شاید در ایران جواب ندهد. اگر هسته با ECH خطا داد، خودش بدون آن امتحان می‌کند", s.aetherEch) { v -> set { it.copy(aetherEch = v) } }
             SettingSwitch("MASQUE روی HTTP/2", "وقتی UDP/QUIC بسته است، MASQUE را روی TCP می‌برد", s.aetherH2) { v -> set { it.copy(aetherH2 = v) } }
             SettingSwitch("اتصال سریع دوباره", "اول همان endpoint سالم قبلی را امتحان می‌کند", s.aetherQuickReconnect) { v -> set { it.copy(aetherQuickReconnect = v) } }
             SettingField("DNS داخل تونل (خالی = 1.1.1.1, 1.0.0.1)", s.aetherDns) { v -> set { it.copy(aetherDns = v) } }
@@ -167,15 +167,15 @@ fun AetherScreen(vm: AppViewModel, app: AppState) {
         }
         GCard {
             H("امنیت و پایداری")
-            SettingSwitch("جلوگیری از نشت IPv6", "IPv6 هم وارد تونل می‌شود و آنجا دور ریخته می‌شود (برای همه‌ی موتورها)", s.blockIpv6Leak) { v -> set { it.copy(blockIpv6Leak = v) } }
+            SettingSwitch("جلوگیری از نشت IPv6", "IPv6 هم وارد تونل می‌شود و همان‌جا دور ریخته می‌شود تا از کنار VPN بیرون نرود (برای همه‌ی موتورها)", s.blockIpv6Leak) { v -> set { it.copy(blockIpv6Leak = v) } }
             SettingField("تعداد تلاش برای اتصال دوباره (۰ = خاموش)", s.reconnectAttempts.toString(), number = true) { v -> set { it.copy(reconnectAttempts = v.toIntOrNull()?.coerceIn(0, 20) ?: 0) } }
             SettingSwitch(
                 "کیل‌سوییچ",
-                "اگر اتصال وسط کار قطع شود یا هسته از کار بیفتد، تونل باز می‌ماند و ترافیک مسدود می‌شود تا چیزی بیرون از VPN نرود؛ تا وقتی دوباره وصل شوید، توقف موقت بزنید یا «قطع» کنید",
+                "اگر وسط کار اتصال قطع شود یا هسته از کار بیفتد، تونل باز می‌ماند ولی ترافیک بسته می‌شود تا چیزی بیرون از VPN نرود. با وصل شدن دوباره، توقف موقت یا «قطع» دوباره باز می‌شود",
                 s.killSwitch,
             ) { v -> set { it.copy(killSwitch = v) } }
-            Hint("سایت‌های ایرانی (در حالت «ایران مستقیم»)، لیست مستقیم شما و «برنامه‌های همیشه مستقیم» عمداً از VPN رد نمی‌شوند و مسدود هم نمی‌شوند. توقف موقت هم مسدودسازی را برمی‌دارد.")
-            Hint("برای محافظت کامل (حتی وقتی برنامه بسته است یا گوشی تازه روشن شده)، در تنظیمات اندروید برای GozarVpn «VPN همیشه روشن» و «مسدود کردن اتصال‌های بدون VPN» را روشن کنید. با گزینه‌ی دوم، برنامه‌های همیشه مستقیم ممکن است اینترنت نداشته باشند.")
+            Hint("سایت‌های ایرانی (در حالت «ایران مستقیم»)، لیست مستقیم شما و «برنامه‌های همیشه مستقیم» از اول قرار نیست از VPN بروند، پس بسته هم نمی‌شوند. توقف موقت هم بسته بودن را برمی‌دارد.")
+            Hint("اگر می‌خواهید حتی وقتی برنامه بسته است یا گوشی تازه روشن شده هم محافظت شوید، در تنظیمات اندروید برای GozarVpn «VPN همیشه روشن» و «مسدود کردن اتصال‌های بدون VPN» را روشن کنید. با گزینه‌ی دوم ممکن است برنامه‌های همیشه مستقیم اینترنت نداشته باشند.")
             val ctx = LocalContext.current
             OutlinedButton({
                 runCatching { ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_VPN_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
@@ -217,7 +217,7 @@ fun TorScreen(vm: AppViewModel, app: AppState) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         GCard {
             H("Tor")
-            Hint("اتصال از طریق پل‌ها (obfs4، webtunnel، snowflake). در خانه موتور Tor را انتخاب و وصل کنید. راه‌اندازی Tor معمولاً ۳۰ ثانیه تا ۳ دقیقه طول می‌کشد؛ درصد پیشرفت (Bootstrapped) در تب لاگ دیده می‌شود.")
+            Hint("با پل‌ها (obfs4، webtunnel، snowflake) وصل می‌شود. در خانه موتور Tor را انتخاب کنید و وصل شوید. بالا آمدن Tor معمولاً بین ۳۰ ثانیه تا ۳ دقیقه طول می‌کشد و درصدش (Bootstrapped) در تب لاگ می‌آید.")
         }
         GCard {
             H("روش اتصال")
@@ -225,12 +225,12 @@ fun TorScreen(vm: AppViewModel, app: AppState) {
                 listOf("warp" to "از طریق Aether (WARP)", "auto" to "خودکار", "obfs4" to "obfs4", "webtunnel" to "webtunnel", "snowflake" to "snowflake", "vanilla" to "پل ساده"),
                 s.torMode,
             ) { v -> vm.repo.updateSettings { it.copy(torMode = v) } }
-            Hint(if (s.torMode == "warp") "اول Aether (همان WARP) وصل می‌شود و Tor همه‌ی اتصال‌هایش را از داخل آن می‌فرستد؛ پل و DNS ایران لازم نیست. در ایران معمولاً پایدارترین روش است." else "قبل از هر اتصال، پل‌ها از همین شبکه پیش‌آزمون می‌شوند و فقط پل‌های سالم به Tor داده می‌شوند. فهرست پل‌ها از Tor-Bridges-Collector (تست ساعتی) تازه می‌شود.")
-            Text("راه‌اندازی Tor ممکن است چند دقیقه طول بکشد؛ پیشرفت زیر دکمه‌ی اتصال و در تب لاگ دیده می‌شود.", color = Warn, fontSize = 12.5.sp)
+            Hint(if (s.torMode == "warp") "اول Aether (همان WARP) وصل می‌شود و Tor همه‌چیز را از داخلش می‌فرستد. پل و DNS ایران لازم ندارد و در ایران معمولاً پایدارترین روش است." else "قبل از هر اتصال، پل‌ها روی همین شبکه امتحان می‌شوند و فقط پل‌های سالم به Tor داده می‌شوند. فهرست پل‌ها از Tor-Bridges-Collector به‌روز می‌شود که هر ساعت تستشان می‌کند.")
+            Text("بالا آمدن Tor ممکن است چند دقیقه طول بکشد. پیشرفتش زیر دکمه‌ی اتصال و در تب لاگ پیداست.", color = Warn, fontSize = 12.5.sp)
         }
         GCard {
             H("پل‌های دلخواه")
-            Hint("پل‌هایی که از bridges.torproject.org، ربات تلگرام یا ایمیل گرفته‌اید را اینجا بچسبانید؛ هر خط یک پل (obfs4، webtunnel، snowflake، meek یا پل ساده). «Bridge» اول خط لازم نیست.")
+            Hint("پل‌هایی را که از bridges.torproject.org، ربات تلگرام یا ایمیل گرفته‌اید اینجا بچسبانید، هر خط یک پل (obfs4، webtunnel، snowflake، meek یا پل ساده). لازم نیست اول خط «Bridge» بنویسید.")
             var text by remember(s.torCustomBridges) { mutableStateOf(s.torCustomBridges) }
             OutlinedTextField(text, { text = it }, Modifier.fillMaxWidth().heightIn(min = 110.dp), textStyle = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, fontFamily = FontFamily.Monospace),
                 placeholder = { Text("obfs4 1.2.3.4:443 FINGERPRINT cert=… iat-mode=0") })
@@ -246,8 +246,8 @@ fun TorScreen(vm: AppViewModel, app: AppState) {
                 color = if (v.ok) Good else Bad, fontSize = 12.sp,
             )
             SettingSwitch("فقط پل‌های من", "به‌جای فهرست پل‌های همراه برنامه، فقط همین پل‌ها استفاده شوند", s.torOnlyMine) { v -> vm.repo.updateSettings { it.copy(torOnlyMine = v) } }
-            if (s.torMode == "warp" && s.torCustomBridges.isNotBlank()) Text("روش فعلی «از طریق Aether (WARP)» پل استفاده نمی‌کند؛ برای استفاده از این پل‌ها روش دیگری انتخاب کنید.", color = Warn, fontSize = 12.sp)
-            Hint("قبل از اتصال، پل‌ها از همین شبکه آزمایش می‌شوند و فقط پل‌های سالم به Tor داده می‌شوند. پل IPv6 روی شبکه‌ای که IPv6 ندارد جواب نمی‌دهد.")
+            if (s.torMode == "warp" && s.torCustomBridges.isNotBlank()) Text("روش «از طریق Aether (WARP)» از پل استفاده نمی‌کند. برای این پل‌ها روش دیگری را انتخاب کنید.", color = Warn, fontSize = 12.sp)
+            Hint("قبل از اتصال، پل‌ها روی همین شبکه امتحان می‌شوند و فقط پل‌های سالم به Tor می‌رسند. پل IPv6 روی شبکه‌ای که IPv6 ندارد کار نمی‌کند.")
         }
     }
 }
@@ -263,7 +263,7 @@ fun ClashScreen(vm: AppViewModel, app: AppState, busy: Boolean) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         GCard {
             H("Clash / mihomo")
-            Hint("هر نوع اشتراک را می‌خواند: Clash YAML، base64 یا لینک‌های vless/vmess/trojan/ss/hysteria2/tuic. همه‌ی سرورها در یک گروه می‌روند و mihomo خودش سرور سالم را انتخاب می‌کند. بعد از ذخیره، در خانه موتور Clash را انتخاب و وصل کنید.")
+            Hint("هر نوع اشتراکی را می‌خواند: Clash YAML، base64 یا لینک‌های vless/vmess/trojan/ss/hysteria2/tuic. همه‌ی سرورها در یک گروه قرار می‌گیرند و mihomo خودش سرور سالم را انتخاب می‌کند. بعد از ذخیره، در خانه موتور Clash را انتخاب کنید و وصل شوید.")
         }
         GCard {
             H("لینک اشتراک")
@@ -405,7 +405,7 @@ fun V2rayScreen(vm: AppViewModel, app: AppState, busy: Boolean) {
         item {
             GCard {
                 H("تست کانفیگ‌ها")
-                Hint("اتصال TCP/TLS (و WebSocket) به هر سرور را بررسی می‌کند. کانفیگ‌های WireGuard تست نمی‌شوند. نتیجه ذخیره می‌شود و تست دوباره جایگزینش می‌کند.")
+                Hint("اتصال TCP/TLS (و WebSocket) هر سرور را امتحان می‌کند. کانفیگ‌های WireGuard تست نمی‌شوند. نتیجه ذخیره می‌شود و با تست بعدی عوض می‌شود.")
                 val r = run
                 if (r != null) {
                     LinearProgressIndicator(progress = { if (r.total == 0) 0f else r.done / r.total.toFloat() }, modifier = Modifier.fillMaxWidth())
@@ -433,7 +433,7 @@ fun V2rayScreen(vm: AppViewModel, app: AppState, busy: Boolean) {
             GCard {
                 SettingSwitch(
                     "انتخاب خودکار",
-                    "هنگام اتصال سریع‌ترین سرور سالم انتخاب می‌شود و اگر ۱۰ بار پشت سر هم جواب نداد، خودکار سرور عوض می‌شود. با زدن روی یک سرور، انتخاب دستی برنده است و این گزینه خاموش می‌شود.",
+                    "موقع اتصال سریع‌ترین سرور سالم انتخاب می‌شود و اگر ۱۰ بار پشت سر هم جواب ندهد، سرور خودکار عوض می‌شود. اگر خودتان روی سروری بزنید، همان انتخاب می‌شود و این گزینه خاموش می‌شود.",
                     app.settings.v2rayAuto,
                 ) { v -> vm.repo.updateSettings { it.copy(v2rayAuto = v) } }
             }
@@ -442,7 +442,7 @@ fun V2rayScreen(vm: AppViewModel, app: AppState, busy: Boolean) {
             GCard {
                 SettingSwitch(
                     "ضد DPI هوشمند",
-                    "هنگام اتصال چند روش تکه‌کردن دست‌دادن TLS را با یک درخواست واقعی امتحان می‌کند و روشی را که جواب داد برای همان سرور نگه می‌دارد. اتصال اول ممکن است چند ثانیه بیشتر طول بکشد.",
+                    "موقع اتصال چند روش تکه‌کردن دست‌دادن TLS را با یک درخواست واقعی امتحان می‌کند و روشی را که جواب داد برای همان سرور یادش می‌ماند. اتصال اول ممکن است چند ثانیه بیشتر طول بکشد.",
                     app.settings.dpiSmart,
                 ) { v -> vm.repo.updateSettings { it.copy(dpiSmart = v) } }
                 val cur = app.configs.firstOrNull { it.id == app.activeId }
@@ -621,7 +621,7 @@ private fun OvpnCredsButton(c: ConfigEntry) {
             title = { Text("نام کاربری و رمز OpenVPN") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Hint("رمزنگاری‌شده روی همین گوشی نگه داشته می‌شود. خالی گذاشتن نام کاربری = پاک کردن.")
+                    Hint("روی همین گوشی و رمزنگاری‌شده نگه داشته می‌شود. اگر نام کاربری را خالی بگذارید، پاک می‌شود.")
                     OutlinedTextField(user, { user = it }, label = { Text("نام کاربری") }, singleLine = true)
                     OutlinedTextField(
                         pass, { pass = it }, label = { Text("رمز") }, singleLine = true,
@@ -659,7 +659,7 @@ fun LogScreen(modifier: Modifier = Modifier) {
             }, enabled = lines.isNotEmpty()) { Text("کپی لاگ") }
             TextButton({ LogBuffer.clear() }) { Text("پاک کردن") }
         }
-        if (lines.isEmpty()) Hint("هنوز چیزی ثبت نشده. لاگ‌ها فقط در حافظه‌اند و روی گوشی ذخیره نمی‌شوند.")
+        if (lines.isEmpty()) Hint("هنوز چیزی ثبت نشده. لاگ فقط در حافظه است و روی گوشی ذخیره نمی‌شود.")
         LazyColumn(Modifier.fillMaxSize(), reverseLayout = true) {
             items(lines.asReversed()) { Text(it, fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = Muted) }
         }
@@ -696,7 +696,7 @@ fun MoreScreen(vm: AppViewModel, app: AppState, connected: Boolean, onReconnect:
         }
         GCard {
             H("درباره‌ی هسته‌ها")
-            Hint("هسته‌های اتصال (sing-box، Aether، Tor، mihomo) پروژه‌های جداگانه و متن‌بازِ اشخاص دیگر هستند که این برنامه فقط رابط گرافیکی برایشان فراهم می‌کند؛ GozarVpn مالکیتی روی آن‌ها ندارد.")
+            Hint("هسته‌های اتصال (sing-box، Aether، Tor، mihomo و بقیه) پروژه‌های متن‌باز جداگانه‌ای هستند که دیگران ساخته‌اند. GozarVpn فقط برایشان رابط کاربری درست کرده و مالکشان نیست.")
         }
     }
 }

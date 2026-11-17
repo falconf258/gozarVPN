@@ -172,7 +172,7 @@ fun HomeScreen(vm: AppViewModel, app: AppState, vpn: VpnUiState, onToggle: () ->
         if (vpn.blocked) {
             val ctx = androidx.compose.ui.platform.LocalContext.current
             Spacer(Modifier.height(6.dp))
-            Text("🛡 کیل‌سوییچ: اتصال قطع شد، ترافیک مسدود است. برای اتصال دوباره روی دکمه بزنید.", color = Warn, fontSize = 12.5.sp)
+            Text("🛡 کیل‌سوییچ: اتصال قطع شده و ترافیک بسته است. برای وصل شدن دوباره روی دکمه بزنید.", color = Warn, fontSize = 12.5.sp)
             androidx.compose.material3.TextButton({
                 ctx.startService(android.content.Intent(ctx, GozarVpnService::class.java).setAction(GozarVpnService.ACTION_STOP))
             }) { Text("برداشتن مسدودسازی و قطع", color = Bad) }
@@ -192,6 +192,15 @@ fun HomeScreen(vm: AppViewModel, app: AppState, vpn: VpnUiState, onToggle: () ->
             EngineOptions(vm, app, busy)
             if (busy) Hint("برای تعویض موتور یا روش، اول قطع کنید.")
         }
+        Spacer(Modifier.height(4.dp))
+        var privacy by remember { mutableStateOf(false) }
+        var donate by remember { mutableStateOf(false) }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            androidx.compose.material3.TextButton({ privacy = true }) { Text("🔒 حریم خصوصی", color = Muted, fontSize = 12.5.sp) }
+            androidx.compose.material3.TextButton({ donate = true }) { Text("♥ حمایت از سازنده", color = Muted, fontSize = 12.5.sp) }
+        }
+        if (privacy) PrivacyDialog { privacy = false }
+        if (donate) DonateDialog { donate = false }
         // room to scroll the last card fully clear of the bottom bar
         Spacer(Modifier.height(32.dp))
     }

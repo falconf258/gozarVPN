@@ -56,4 +56,4 @@ which engine is running; GozarVpn is not affiliated with them.
 
 ## Security
 
-Please report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
+Please report vulnerabilities privately. See [SECURITY.md](SECURITY.md).

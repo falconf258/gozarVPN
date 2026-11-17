@@ -8,8 +8,7 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * Third connection engine: mihomo (Clash.Meta) — the core WhiteVPN-Desktop
- * is built on. Its value over sing-box is the subscription handling: a
+ * Connection engine: mihomo (Clash.Meta). Its value over sing-box is the subscription handling: a
  * provider file can be a Clash YAML (`proxies:`), a base64 blob or plain
  * vless:// / vmess:// / hysteria2:// … lines, and mihomo parses all of
  * them itself. Every node of the subscription goes into one `url-test`

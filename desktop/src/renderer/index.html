@@ -75,7 +75,7 @@
           <div class="hero-uptime mono" id="dash-uptime">-</div>
           <div id="tunnel-verify-banner" class="tunnel-banner" style="display:none"></div>
           <div id="tun-badge" class="tun-badge" style="display:none"></div>
-          <div id="ks-banner" class="tun-badge error" style="display:none">🛡 کیل‌سوییچ: اتصال قطع است و اینترنت بقیه‌ی برنامه‌ها مسدود است. دوباره وصل شوید یا <a href="#" id="ks-banner-off">مسدودسازی را بردارید</a>.</div>
+          <div id="ks-banner" class="tun-badge error" style="display:none">🛡 کیل‌سوییچ: اتصال قطع است و اینترنت بقیه‌ی برنامه‌ها بسته است. دوباره وصل شوید یا <a href="#" id="ks-banner-off">مسدودسازی را بردارید</a>.</div>
           <div class="dash-connect-row">
             <button id="dash-connect-btn" class="btn primary big">اتصال</button>
             <button id="dash-disconnect-btn" class="btn danger-solid big" style="display:none">قطع اتصال</button>
@@ -107,7 +107,11 @@
           </div>
           <!-- options of the selected engine (filled by app.js); the proxy/TUN mode lives in Settings -->
           <div id="engine-options" class="engine-options"></div>
-          <p class="muted hint">برای تعویض موتور یا تنظیماتش، ابتدا قطع اتصال کنید. حالت اتصال (پراکسی / TUN) در «بیشتر › تنظیمات» است.</p>
+          <p class="muted hint">برای عوض کردن موتور یا تنظیماتش، اول اتصال را قطع کنید. حالت اتصال (پراکسی یا TUN) در «بیشتر › تنظیمات» است.</p>
+        </div>
+        <div class="info-links">
+          <button id="open-privacy" class="btn ghost small">🔒 حریم خصوصی</button>
+          <button id="open-donate" class="btn ghost small">♥ حمایت از سازنده</button>
         </div>
 
         <div class="card status-card">
@@ -178,10 +182,8 @@
         <div class="card">
           <h3>اسکنر IP</h3>
           <p class="muted" style="font-size:13px">
-            این ابزار (<b>CloudflareSpeedTest</b>) آی‌پی‌های Cloudflare را از نظر <b>تاخیر و دسترسی روی پورت TCP/443</b> تست می‌کند —
-            که برای شتاب‌دهی سایت‌های پشت Cloudflare عالی است، اما پروتکل‌های خودِ Aether (MASQUE/WireGuard) روی <b>UDP</b> کار می‌کنند.
-            یعنی سالم‌بودن یک IP در این تست، <b>تضمین نمی‌کند</b> که همان IP روی UDP هم سالم باشد — ولی چون معمولاً هر دو از یک زیرساخت
-            عبور می‌کنند، در عمل شانس خوبی برای پیدا کردن یک Peer اجباری قابل‌استفاده می‌دهد. بعد از اعمال، حتماً از تب داشبورد وصل شوید و تست کنید.
+            این ابزار (<b>CloudflareSpeedTest</b>) آی‌پی‌های Cloudflare را از نظر <b>تاخیر و دسترسی روی پورت TCP/443</b> تست می‌کند. این برای سرعت سایت‌های پشت Cloudflare خوب است، ولی پروتکل‌های خودِ Aether (MASQUE/WireGuard) روی <b>UDP</b> کار می‌کنند.
+            یعنی سالم‌بودن یک IP در این تست، <b>تضمین نمی‌کند</b> که همان IP روی UDP هم سالم باشد. ولی چون معمولاً هر دو از یک زیرساخت رد می‌شوند، در عمل شانس خوبی برای پیدا کردن یک Peer به‌دردبخور دارد. بعد از اعمال، از داشبورد وصل شوید و امتحانش کنید.
           </p>
         </div>
 
@@ -212,7 +214,7 @@
             </div>
           </div>
           <p class="muted" style="font-size:11.5px;margin-top:-6px">
-            ابزار CFST راهی برای «توقف خودکار بعد از پیدا شدن N نتیجه‌ی سالم» ندارد؛ نزدیک‌ترین معادلش محدودکردن تعداد IPِ ورودی (بالا) و تعداد نتایجِ نگه‌داشته‌شده (کنار آن) است.
+            ابزار CFST نمی‌تواند بعد از پیدا کردن چند IP سالم خودش متوقف شود. نزدیک‌ترین راه این است که تعداد IPهای ورودی (بالا) و تعداد نتیجه‌هایی را که نگه می‌دارد (کنارش) کم کنید.
           </p>
           <div class="btn-row">
             <button id="scan-start" class="btn primary">شروع اسکن</button>
@@ -230,7 +232,7 @@
             <button id="scan-clear-peer" class="btn ghost small danger">پاک کردن Peer اجباری</button>
           </div>
           <p class="muted" style="font-size:11.5px;margin-top:-6px">
-            هشدار: این تست فقط دسترسی TCP:443 را می‌سنجد، نه پروتکل واقعی MASQUE/WARP. اگر بعد از اعمال یک IP، اتصال موتور Aether وارد چرخه‌ی «در حال اتصال مجدد» بی‌پایان شد، همین دکمه را بزنید تا Peer اجباری پاک شود و Aether به اسکن خودکار خودش برگردد.
+            این تست فقط باز بودن TCP:443 را نگاه می‌کند، نه خود MASQUE/WARP را. اگر بعد از گذاشتن یک IP، موتور Aether مدام «در حال اتصال مجدد» ماند، همین دکمه را بزنید تا Peer اجباری پاک شود و Aether دوباره خودش اسکن کند.
           </p>
           <div id="scan-results"></div>
         </div>
@@ -239,8 +241,8 @@
       <section class="tab" id="tab-v2ray" data-group="configs">
         <div class="card">
           <h3>ضد DPI هوشمند</h3>
-          <label class="check-row"><input type="checkbox" id="v2ray-dpi-smart"> هنگام اتصال چند روش تکه‌کردن دست‌دادن TLS را با یک تست واقعی امتحان کن و روشی را که جواب داد برای همان سرور نگه دار</label>
-          <p class="muted" style="font-size:11.5px">فقط روی سرورهای TLS و REALITY اثر دارد. اگر برای کانفیگی فرگمنت را دستی تنظیم کرده باشید، تنظیم دستی شما برنده است. اتصال اول ممکن است چند ثانیه بیشتر طول بکشد.</p>
+          <label class="check-row"><input type="checkbox" id="v2ray-dpi-smart"> موقع اتصال چند روش تکه‌کردن دست‌دادن TLS را امتحان کن و روشی را که جواب داد برای همان سرور یادت بماند</label>
+          <p class="muted" style="font-size:11.5px">فقط روی سرورهای TLS و REALITY اثر دارد. اگر برای کانفیگی فرگمنت را دستی تنظیم کرده باشید، همان تنظیم شما استفاده می‌شود. اتصال اول ممکن است چند ثانیه بیشتر طول بکشد.</p>
         </div>
         <div class="card">
           <h3>هسته‌ی sing-box</h3>
@@ -259,7 +261,7 @@
         <div class="card">
           <h3>افزودن کانفیگ از لینک سابسکریپشن</h3>
           <p class="muted" style="font-size:12.5px">
-            آدرس لینک سابسکریپشن (مثلاً از پنل BPB یا هر پنل دیگر) را اینجا بچسبانید — همه‌ی کانفیگ‌های داخلش خودکار خوانده و اضافه می‌شوند.
+            لینک سابسکریپشن (مثلاً از پنل BPB یا هر پنل دیگری) را اینجا بچسبانید. همه‌ی کانفیگ‌های داخلش خودکار اضافه می‌شوند.
           </p>
           <div class="field-file">
             <input type="text" id="v2ray-sub-name" placeholder="نام سابسکریپشن (اختیاری)">
@@ -272,7 +274,7 @@
         <div class="card">
           <h3>WARP رایگان Cloudflare</h3>
           <p class="muted" style="font-size:12.5px">
-            یک اکانت WARP رایگان می‌سازد و به‌صورت کانفیگ WireGuard در همین لیست اضافه می‌کند. برای ساخت اکانت به اینترنت (یا یک اتصال فعال مثل Aether) نیاز است. اگر روی شبکه‌ی شما وصل نشد، از روش‌های دیگر هم می‌توان پورت یا IP را عوض کرد.
+            یک اکانت WARP رایگان می‌سازد و به‌شکل کانفیگ WireGuard به همین لیست اضافه می‌کند. برای ساختنش اینترنت (یا یک اتصال روشن مثل Aether) لازم است. اگر روی شبکه‌ی شما وصل نشد، می‌شود پورت یا IP را هم عوض کرد.
           </p>
           <div class="btn-row"><button id="v2ray-warp-btn" class="btn primary">ساخت و افزودن WARP</button></div>
           <div id="v2ray-warp-status" class="update-status"></div>
@@ -289,10 +291,10 @@
             <button id="v2ray-import-conf-file-btn" class="btn ghost">انتخاب فایل .conf</button>
           </div>
           <p class="muted" style="font-size:11.5px;margin-top:-4px">
-            ⚠️ فایل‌های AmneziaWG هم پذیرفته می‌شوند، ولی پارامترهای مبهم‌سازی مخصوص آن (Jc/Jmin/H1...) نادیده گرفته می‌شوند و کانفیگ به‌صورت WireGuard معمولی وصل می‌شود — چون هسته‌ی رسمی sing-box که استفاده می‌کنیم از AmneziaWG پشتیبانی نمی‌کند.
+            فایل‌های AmneziaWG هم با تنظیمات مبهم‌سازی خودشان (Jc، Jmin، H1 و بقیه) وصل می‌شوند؛ این کار را موتور جداگانه‌ی AmneziaWG انجام می‌دهد.
           </p>
-          <label class="check-row"><input type="checkbox" id="v2ray-record-fragment" checked> فرگمنت‌کردن TLS ClientHello (پیشنهادی — برای دور زدن مسدودسازی فعال، بدون نیاز به دسترسی مدیر)</label>
-          <label class="check-row"><input type="checkbox" id="v2ray-fragment"> فرگمنت کامل بسته‌ها (قوی‌تر ولی ممکن است در ویندوز نیاز به اجرا با دسترسی Administrator داشته باشد)</label>
+          <label class="check-row"><input type="checkbox" id="v2ray-record-fragment" checked> تکه‌کردن TLS ClientHello (پیشنهادی؛ برای رد شدن از فیلتر، بدون نیاز به دسترسی مدیر)</label>
+          <label class="check-row"><input type="checkbox" id="v2ray-fragment"> تکه‌کردن کامل بسته‌ها (قوی‌تر، ولی ممکن است در ویندوز دسترسی Administrator بخواهد)</label>
           <div class="btn-row">
             <button id="v2ray-import-btn" class="btn primary">افزودن</button>
           </div>
@@ -306,7 +308,7 @@
             <button id="v2ray-sort-ping" class="btn ghost small" title="مرتب‌سازی بر اساس کمترین پینگ">↕ پینگ</button>
             <button id="v2ray-test-all" class="btn ghost small">تست همه (پینگ)</button>
           </div>
-          <p class="muted" style="font-size:11.5px;margin:0 0 8px">تست واقعی: از هر سرور یک درخواست HTTPS واقعی رد می‌شود و زمان پاسخ نمایش داده می‌شود (سرور خراب «ناموفق» می‌شود). برای فهرست‌های بزرگ چند دقیقه طول می‌کشد.</p>
+          <p class="muted" style="font-size:11.5px;margin:0 0 8px">تست واقعی: از هر سرور یک درخواست HTTPS واقعی رد می‌شود و زمان جوابش نشان داده می‌شود. سرور خراب «ناموفق» می‌شود. برای فهرست‌های بزرگ چند دقیقه طول می‌کشد.</p>
           <div id="v2ray-test-warning" class="tunnel-banner failed" hidden></div>
           <div id="v2ray-test-progress" class="test-progress" hidden>
             <div class="tp-row">
@@ -323,7 +325,7 @@
         <div class="card">
           <h3>Tor (موتور چهارم)</h3>
           <p class="muted" style="font-size:12.5px">
-            شبکه‌ی Tor از طریق پل‌های (bridge) تست‌شده وصل می‌شود تا در شبکه‌های فیلترشده هم کار کند. سرعتش از VPN معمولی کمتر است، ولی هویت شما را بیشتر پنهان می‌کند. هسته‌ی رسمی Tor Expert Bundle دانلود و با امضای SHA-256 بررسی می‌شود.
+            Tor با پل‌های (bridge) تست‌شده وصل می‌شود تا روی شبکه‌های فیلترشده هم کار کند. از VPN معمولی کندتر است، ولی هویت شما را بهتر پنهان می‌کند. هسته‌ی رسمی Tor Expert Bundle دانلود و با هش SHA-256 بررسی می‌شود.
           </p>
           <p class="muted">نسخه نصب‌شده: <b id="tor-version">-</b></p>
           <div class="btn-row">
@@ -350,11 +352,11 @@
             <button id="tor-bridges-update" class="btn ghost">به‌روزرسانی پل‌ها</button>
           </div>
           <div id="tor-bridges-status" class="update-status"></div>
-          <p class="muted" style="font-size:11.5px">پل‌ها از ریپوی Tor-Bridges-Collector گرفته می‌شوند (هر ساعت تست می‌شوند). یک نسخه‌ی اولیه همراه برنامه هست.</p>
+          <p class="muted" style="font-size:11.5px">پل‌ها از مخزن Tor-Bridges-Collector گرفته می‌شوند که هر ساعت تستشان می‌کند. یک نسخه‌ی اولیه هم همراه برنامه هست.</p>
         </div>
         <div class="card">
           <h3>پل‌های دلخواه</h3>
-          <p class="muted" style="font-size:12px">پل‌هایی که از bridges.torproject.org، ربات تلگرام یا ایمیل گرفته‌اید را اینجا بچسبانید؛ هر خط یک پل (obfs4، webtunnel، snowflake، meek یا پل ساده). «Bridge» اول خط لازم نیست.</p>
+          <p class="muted" style="font-size:12px">پل‌هایی را که از bridges.torproject.org، ربات تلگرام یا ایمیل گرفته‌اید اینجا بچسبانید، هر خط یک پل (obfs4، webtunnel، snowflake، meek یا پل ساده). لازم نیست اول خط «Bridge» بنویسید.</p>
           <textarea id="tor-custom" dir="ltr" placeholder="obfs4 1.2.3.4:443 FINGERPRINT cert=... iat-mode=0" style="width:100%;min-height:96px;font-family:Consolas,monospace;font-size:12px"></textarea>
           <label class="check-row"><input type="checkbox" id="tor-only-mine"> فقط پل‌های من (به‌جای فهرست همراه برنامه)</label>
           <div class="btn-row"><button id="tor-custom-save" class="btn primary small">ذخیره</button><span class="muted" id="tor-custom-count" style="font-size:12px"></span></div>
@@ -365,7 +367,7 @@
       <section class="tab" id="tab-psiphon" data-group="configs">
         <div class="card">
           <h3>سایفون</h3>
-          <p class="muted" style="font-size:12.5px">سایفون با همان هسته‌ی Aether اجرا می‌شود و حساب جداگانه لازم ندارد. در خانه موتور «سایفون» را انتخاب و وصل کنید؛ شروع اول ممکن است یکی دو دقیقه طول بکشد.</p>
+          <p class="muted" style="font-size:12.5px">سایفون با همان هسته‌ی Aether اجرا می‌شود و حساب جداگانه نمی‌خواهد. در خانه موتور «سایفون» را انتخاب کنید و وصل شوید. بار اول ممکن است یکی دو دقیقه طول بکشد.</p>
           <div id="psiphon-core-status" class="update-status"></div>
         </div>
         <div class="card">
@@ -395,14 +397,14 @@
               <option value="CH">CH · سوئیس</option><option value="SG">SG · سنگاپور</option><option value="JP">JP · ژاپن</option>
             </select>
           </div>
-          <p class="muted" style="font-size:11.5px">«از طریق Aether» وقتی سرورهای سایفون مستقیم باز نمی‌شوند بهتر است. همه‌ی کشورها همیشه در دسترس نیستند؛ کشورهای در دسترس هنگام اتصال در لاگ می‌آید (AvailableEgressRegions).</p>
+          <p class="muted" style="font-size:11.5px">«از طریق Aether» وقتی سرورهای سایفون مستقیم باز نمی‌شوند بهتر است. همیشه همه‌ی کشورها در دسترس نیستند. کشورهایی که موجودند موقع اتصال در لاگ می‌آیند (AvailableEgressRegions).</p>
         </div>
       </section>
 
       <section class="tab" id="tab-openvpn" data-group="configs">
         <div class="card">
           <h3>OpenVPN</h3>
-          <p class="muted" style="font-size:12.5px">فایل‌های .ovpn (مثلاً از گروه‌های تلگرام) را اضافه کنید. اتصال با برنامه‌ی رسمی OpenVPN انجام می‌شود که تونل کل سیستم را خودش می‌سازد؛ حالت TUN / پراکسی برنامه برای آن استفاده نمی‌شود و به دسترسی Administrator نیاز دارد.</p>
+          <p class="muted" style="font-size:12.5px">فایل‌های .ovpn (مثلاً از گروه‌های تلگرام) را اینجا اضافه کنید. اتصال با برنامه‌ی رسمی OpenVPN است که خودش تونل کل سیستم را می‌سازد، پس حالت TUN یا پراکسی برنامه برایش استفاده نمی‌شود. دسترسی Administrator هم لازم دارد.</p>
           <div id="openvpn-exe-status" class="update-status"></div>
           <div class="row-actions" style="gap:8px;flex-wrap:wrap">
             <button id="openvpn-install" class="btn ghost small">دانلود و نصب OpenVPN رسمی</button>
@@ -418,7 +420,7 @@
           </div>
           <p class="muted" id="openvpn-add-status" style="font-size:12px"></p>
           <div id="openvpn-list"></div>
-          <p class="muted" style="font-size:11.5px">• «تست» یک دست‌دادن واقعی با سرور انجام می‌دهد (بدون تغییر در شبکه).<br>• OpenVPN در ایران راحت شناسایی و مسدود می‌شود؛ بسیاری از کانفیگ‌ها فقط روی بعضی اپراتورها کار می‌کنند. کانفیگ‌های TCP روی پورت 443 شانس بیشتری دارند.<br>• «ایران مستقیم» با OpenVPN بر اساس IP کار می‌کند (محدوده‌های IP ایران و IPهای لیست مستقیم)، نه دامنه.<br>• برای امنیت، دستورهای اجرای برنامه (up/down/script…) از فایل حذف می‌شوند.</p>
+          <p class="muted" style="font-size:11.5px">• «تست» یک دست‌دادن واقعی با سرور انجام می‌دهد (بدون تغییر در شبکه).<br>• OpenVPN در ایران راحت شناسایی و بسته می‌شود و خیلی از کانفیگ‌ها فقط روی بعضی اپراتورها کار می‌کنند. کانفیگ‌های TCP روی پورت 443 شانس بیشتری دارند.<br>• «ایران مستقیم» با OpenVPN بر اساس IP کار می‌کند (محدوده‌های IP ایران و IPهای لیست مستقیم)، نه دامنه.<br>• برای امنیت، دستورهای اجرای برنامه (up/down/script…) از فایل حذف می‌شوند.</p>
         </div>
       </section>
 
@@ -426,7 +428,7 @@
         <div class="card">
           <h3>هسته‌ی mihomo (Clash.Meta)</h3>
           <p class="muted" style="font-size:12.5px">
-            موتور سوم، همان هسته‌ای که WhiteVPN استفاده می‌کند. هر نوع سابسکریپشن را می‌خواند: Clash YAML، base64 و لینک‌های vless/vmess/trojan/ss/hysteria2/tuic. همه‌ی سرورهای سابسکریپشن داخل یک گروه می‌روند و mihomo خودش سریع‌ترین سرور سالم را انتخاب می‌کند.
+            هر نوع سابسکریپشنی را می‌خواند: Clash YAML، base64 و لینک‌های vless/vmess/trojan/ss/hysteria2/tuic. همه‌ی سرورها در یک گروه قرار می‌گیرند و mihomo خودش سریع‌ترین سرور سالم را انتخاب می‌کند.
           </p>
           <p class="muted">نسخه نصب‌شده: <b id="mihomo-version">-</b></p>
           <div class="btn-row">
@@ -515,7 +517,7 @@
             <pre id="app-update-notes" class="muted" style="display:none;white-space:pre-wrap;font-family:inherit;font-size:12px;max-height:180px;overflow:auto;margin:8px 0"></pre>
             <label class="check-row"><input type="checkbox" id="ui-auto-update-check"> بررسی خودکار هنگام باز شدن برنامه</label>
             <label class="check-row"><input type="checkbox" id="ui-update-beta"> نسخه‌های آزمایشی هم نشان داده شود</label>
-            <p class="muted" style="font-size:11.5px;margin:4px 0">از GitHub دانلود می‌شود (اگر مستقیم باز نشد، از طریق اتصال فعلی VPN) و فایل با SHA256SUMS.txt همان نسخه بررسی می‌شود. نسخه‌ی پرتابل جایگزین خودش نمی‌شود؛ فایل جدید کنار همین فایل ذخیره و نشان داده می‌شود.</p>
+            <p class="muted" style="font-size:11.5px;margin:4px 0">از GitHub دانلود می‌شود (اگر مستقیم باز نشد، از داخل اتصال فعلی VPN) و با SHA256SUMS.txt همان نسخه بررسی می‌شود. نسخه‌ی پرتابل نمی‌تواند خودش را عوض کند، پس فایل جدید کنارش ذخیره و نشان داده می‌شود.</p>
             <button id="app-releases" class="btn ghost small">صفحه‌ی انتشارها در GitHub</button>
           </div>
         </div>
@@ -541,7 +543,7 @@
             <label for="routing-proxy">همیشه از VPN (هر خط یک دامنه یا آی‌پی)</label>
             <textarea id="routing-proxy" placeholder="telegram.org" style="min-height:64px"></textarea>
           </div>
-          <p class="muted" style="font-size:11.5px">example.com زیردامنه‌ها را هم می‌گیرد. لیست «همیشه از VPN» بر بقیه اولویت دارد. تغییرها از اتصال بعدی اعمال می‌شوند.</p>
+          <p class="muted" style="font-size:11.5px">نوشتن example.com زیردامنه‌هایش را هم شامل می‌شود. لیست «همیشه از VPN» از بقیه مهم‌تر است. تغییرها از اتصال بعدی اعمال می‌شوند.</p>
           <div class="btn-row">
             <button id="routing-update" class="btn ghost small">به‌روزرسانی قوانین ایران</button>
             <span class="muted" style="font-size:12px" id="routing-version"></span>
@@ -563,7 +565,7 @@
           </div>
           <label class="check-row"><input type="checkbox" id="ui-tun-mode"> استفاده از TUN به‌جای پراکسی سیستم</label>
           <p class="muted" style="font-size:12px;margin:-6px 0 10px">
-            یک کارت شبکه‌ی مجازی (Wintun) ساخته می‌شود و <b>همه‌ی برنامه‌ها</b> (بازی، تلگرام دسکتاپ، ترمینال و…) بدون نیاز به تنظیم پراکسی از تونل رد می‌شوند. برای هر دو موتور کار می‌کند، ولی به هسته‌ی sing-box (تب کانفیگ‌ها) و دسترسی Administrator نیاز دارد. TUN فقط بعد از تأیید سالم‌بودن تونل فعال می‌شود.
+            یک کارت شبکه‌ی مجازی (Wintun) ساخته می‌شود و <b>همه‌ی برنامه‌ها</b> (بازی، تلگرام دسکتاپ، ترمینال و…) بدون تنظیم پراکسی از تونل می‌روند. با همه‌ی موتورها کار می‌کند، ولی هسته‌ی sing-box (تب کانفیگ‌ها) و دسترسی Administrator لازم دارد. TUN فقط وقتی روشن می‌شود که سالم بودن تونل تأیید شده باشد.
           </p>
           <p class="muted" id="admin-status" style="font-size:12px"></p>
           <button id="relaunch-admin" class="btn ghost small">اجرای مجدد با دسترسی مدیر</button>
@@ -572,10 +574,10 @@
           <h3>کیل‌سوییچ</h3>
           <label class="check-row"><input type="checkbox" id="ui-kill-switch"> اگر اتصال قطع شد، اینترنت بقیه‌ی برنامه‌ها هم قطع شود</label>
           <p class="muted" style="font-size:12px;margin:-6px 0 10px">
-            هنگام اتصال، با قوانین فایروال ویندوز همه‌ی ترافیک خروجی بسته می‌شود به‌جز خود GozarVpn و هسته‌هایش، شبکه‌ی محلی (مودم، پرینتر) و آداپتور TUN. اگر موتور از کار بیفتد، هیچ برنامه‌ای بیرون از VPN به اینترنت نمی‌رود تا وقتی «قطع اتصال» را بزنید. با قطع اتصال یا بستن برنامه قوانین برداشته می‌شوند.
+            موقع اتصال، فایروال ویندوز همه‌ی ترافیک خروجی را می‌بندد، به‌جز خود GozarVpn و هسته‌هایش، شبکه‌ی خانه (مودم، پرینتر) و آداپتور TUN. اگر موتور از کار بیفتد، هیچ برنامه‌ای بیرون از VPN به اینترنت نمی‌رود تا «قطع اتصال» را بزنید. با قطع اتصال یا بستن برنامه این قوانین برداشته می‌شوند.
           </p>
           <p class="muted" style="font-size:12px;margin:-6px 0 10px">
-            ⚠ به دسترسی Administrator نیاز دارد و تا وقتی فعال است، فایروال ویندوز را روشن نگه می‌دارد. در حالت پراکسی سیستم، برنامه‌هایی که از پراکسی استفاده نمی‌کنند اینترنت نخواهند داشت. سایت‌های ایرانی (ایران مستقیم) از مسیر خود GozarVpn می‌روند و کار می‌کنند.
+            ⚠ دسترسی Administrator لازم دارد و تا وقتی روشن است، فایروال ویندوز را هم روشن نگه می‌دارد. در حالت پراکسی سیستم، برنامه‌هایی که از پراکسی استفاده نمی‌کنند اینترنت ندارند. سایت‌های ایرانی (ایران مستقیم) از مسیر خود GozarVpn می‌روند و کار می‌کنند.
           </p>
           <p class="muted" id="ks-status" style="font-size:12px"></p>
           <button id="ks-emergency" class="btn ghost small">اضطراری: حذف قوانین</button>
@@ -584,11 +586,11 @@
           <h3>تنظیمات برنامه</h3>
           <label class="check-row"><input type="checkbox" id="ui-auto-proxy"> تنظیم خودکار پراکسی سیستم هنگام اتصال (توصیه‌شده)</label>
           <p class="muted" style="font-size:12px;margin:-6px 0 10px">
-            بدون این گزینه، تانل فقط یک پراکسی SOCKS5 محلی بالا می‌آورد ولی هیچ برنامه‌ای به‌طور خودکار از آن استفاده نمی‌کند و فیلترینگ دور زده نمی‌شود.
+            اگر خاموش باشد، تونل فقط یک پراکسی SOCKS5 محلی می‌سازد و هیچ برنامه‌ای خودش از آن استفاده نمی‌کند، پس فیلتر رد نمی‌شود.
           </p>
           <label class="check-row"><input type="checkbox" id="ui-socks-only-proxy"> پراکسی سیستم فقط SOCKS5 باشد (بدون HTTP/HTTPS)</label>
           <p class="muted" style="font-size:12px;margin:-6px 0 10px">
-            پیشرفته/عیب‌یابی: اگر با موتور V2ray/Xray سایت‌ها قطع می‌شوند با اینکه تست پینگ موفق بود، این گزینه را امتحان کنید. توجه: با بعضی برنامه‌ها ممکن است پراکسی فقط-SOCKS اصلاً استفاده نشود.
+            برای عیب‌یابی: اگر با موتور V2ray/Xray تست پینگ موفق است ولی سایت‌ها باز نمی‌شوند، این را امتحان کنید. بعضی برنامه‌ها پراکسی فقط-SOCKS را اصلاً استفاده نمی‌کنند.
           </p>
           <label class="check-row"><input type="checkbox" id="ui-launch-startup"> اجرای خودکار هنگام روشن شدن ویندوز</label>
           <label class="check-row"><input type="checkbox" id="ui-start-minimized"> شروع به‌صورت مینیمایز (Tray)</label>
@@ -637,7 +639,7 @@
         <div class="card">
           <h3>درباره‌ی هسته و اسکنر</h3>
           <p class="muted" style="font-size:12.5px">
-            هسته‌ی اتصال (aether.exe) و اسکنر IP (CloudflareSpeedTest) پروژه‌های جداگانه و متن‌بازِ اشخاص دیگر هستند که این برنامه فقط رابط گرافیکی برایشان فراهم می‌کند؛ GozarVpn مالکیتی روی آن‌ها ندارد.
+            هسته‌های اتصال (مثل aether.exe) و اسکنر IP (CloudflareSpeedTest) پروژه‌های متن‌باز جداگانه‌ای هستند که دیگران ساخته‌اند. GozarVpn فقط برایشان رابط کاربری درست کرده و مالکشان نیست.
           </p>
         </div>
       </section>

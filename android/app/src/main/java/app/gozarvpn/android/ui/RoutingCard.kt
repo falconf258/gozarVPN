@@ -35,7 +35,7 @@ fun RoutingCard(vm: AppViewModel, app: AppState, connected: Boolean, onReconnect
         H("مسیر ترافیک")
         ChoiceChips(listOf("iran" to "ایران مستقیم، بقیه VPN", "all" to "همه از VPN", "custom" to "فقط لیست من از VPN"), s.routingMode) { v -> set { it.copy(routingMode = v) } }
         Hint(when (s.routingMode) {
-            "iran" -> "سایت‌های ‎.ir، سایت‌های ایرانی و آی‌پی‌های ایران مستقیم (بیرون از VPN) باز می‌شوند؛ بقیه، مثل تلگرام و یوتیوب، از VPN. برای برنامه‌های بانکی، آن‌ها را در «تونل‌سازی انتخابی» هم بیرون بگذارید."
+            "iran" -> "سایت‌های ‎.ir و سایت‌ها و آی‌پی‌های ایرانی مستقیم (بیرون از VPN) باز می‌شوند و بقیه، مثل تلگرام و یوتیوب، از VPN. برنامه‌های بانکی را در «تونل‌سازی انتخابی» هم بیرون بگذارید."
             "custom" -> "فقط دامنه‌ها و آی‌پی‌های لیست «همیشه از VPN» از تونل می‌روند؛ بقیه مستقیم."
             else -> "همه‌ی ترافیک از VPN می‌رود."
         })
@@ -75,7 +75,7 @@ fun RoutingCard(vm: AppViewModel, app: AppState, connected: Boolean, onReconnect
             set { st -> st.copy(perAppMode = "except", perAppPackages = picked) }
             picking = false
         }
-        Hint("توجه: بعضی برنامه‌های بانکی وقتی هر VPNی روشن باشد اجرا نمی‌شوند، حتی اگر خودشان بیرون از تونل باشند، چون روشن بودن VPN را از خود اندروید می‌پرسند. برای آن‌ها چاره‌ای جز قطع موقت VPN نیست.")
+        Hint("بعضی برنامه‌های بانکی تا وقتی هر VPNی روشن باشد باز نمی‌شوند، حتی اگر خودشان بیرون از تونل باشند، چون از خود اندروید می‌پرسند VPN روشن است یا نه. برای این‌ها فقط قطع موقت VPN جواب می‌دهد.")
         H("این دامنه از کجا می‌رود؟")
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(testHost, { testHost = it; testResult = null }, Modifier.weight(1f), singleLine = true, placeholder = { Text("مثلاً bmi.ir") })
@@ -97,7 +97,7 @@ fun RoutingCard(vm: AppViewModel, app: AppState, connected: Boolean, onReconnect
             }, enabled = testHost.isNotBlank()) { Text("بررسی") }
         }
         testResult?.let { Text(it, color = if (it.startsWith("مستقیم")) Good else MaterialTheme.colorScheme.primary, fontSize = 13.sp) }
-        Hint("این بررسی دامنه را می‌سنجد؛ سایتی که فقط آی‌پی ایرانی دارد هنگام اتصال هم مستقیم می‌رود.")
+        Hint("این بررسی فقط دامنه را نگاه می‌کند. سایتی که فقط آی‌پی ایرانی دارد هم موقع اتصال مستقیم باز می‌شود.")
         if (connected && changed) Row(verticalAlignment = Alignment.CenterVertically) {
             Text("تغییر از اتصال بعدی اعمال می‌شود.", color = Warn, fontSize = 12.5.sp, modifier = Modifier.weight(1f))
             TextButton({ changed = false; onReconnect() }) { Text("اتصال دوباره") }
@@ -143,7 +143,7 @@ fun AutoPauseCard(vm: AppViewModel, app: AppState) {
     val pm = ctx.packageManager
     GCard {
         H("توقف خودکار VPN برای برنامه‌های خاص")
-        Hint("بعضی برنامه‌های بانکی (مثل سپینو) تا وقتی هر VPNی روشن باشد باز نمی‌شوند، حتی اگر بیرون از تونل باشند. وقتی یکی از برنامه‌های این لیست باز شود، VPN خودکار متوقف می‌شود و چند ثانیه بعد از بستنش دوباره وصل می‌شود.")
+        Hint("بعضی برنامه‌های بانکی (مثل سپینو) تا وقتی هر VPNی روشن باشد باز نمی‌شوند، حتی اگر بیرون از تونل باشند. وقتی یکی از برنامه‌های این لیست باز شود، VPN خودش متوقف می‌شود و چند ثانیه بعد از بستن آن برنامه دوباره وصل می‌شود.")
         SettingSwitch("فعال", "از اتصال بعدی اعمال می‌شود", s.autoPauseApps) { v -> vm.repo.updateSettings { it.copy(autoPauseApps = v) } }
         if (!granted) {
             Text("برای فهمیدن این‌که کدام برنامه باز است، اجازه‌ی «دسترسی به اطلاعات استفاده» (Usage access) لازم است.", color = Warn, fontSize = 12.5.sp)
@@ -169,7 +169,7 @@ fun AutoPauseCard(vm: AppViewModel, app: AppState) {
             vm.repo.updateSettings { it.copy(autoPausePackages = picked) }
             picking = false
         }
-        Hint("وصل شدن دوباره چند ثانیه طول می‌کشد (با Aether ۵ تا ۳۰ ثانیه). اگر برنامه‌ی بانکی در پس‌زمینه بماند و دوباره بررسی کند، ممکن است باز پیام بدهد. برای توقف دستی: دکمه‌ی «توقف ۵ دقیقه» در اعلان یا کاشی GozarVpn در منوی بالای گوشی.")
+        Hint("وصل شدن دوباره چند ثانیه طول می‌کشد (با Aether بین ۵ تا ۳۰ ثانیه). اگر برنامه‌ی بانکی در پس‌زمینه بماند و دوباره بررسی کند، ممکن است باز هم پیام بدهد. برای توقف دستی، دکمه‌ی «توقف ۵ دقیقه» در اعلان یا کاشی GozarVpn در منوی بالای گوشی را بزنید.")
     }
 }
 

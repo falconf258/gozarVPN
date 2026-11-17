@@ -477,10 +477,10 @@ async function handleSystemProxyForStatus(engine, manager, state) {
 
       if (result.ok) {
         verifiedAddress[engine] = state.address;
-        manager.log('info', `[gui] تونل تایید شد — ترافیک واقعی از آن رد می‌شود (${result.latencyMs} ms).`);
+        manager.log('info', `[gui] تونل سالم است و ترافیک واقعی از آن رد می‌شود (${result.latencyMs} ms).`);
         await applyRouting(manager, state, ui);
       } else {
-        manager.log('error', `[gui] تونل بالا آمد اما ترافیک واقعی رد نمی‌کند (${result.error}). به همین دلیل پراکسی سیستم فعال نشد — تا وقتی این خطا برطرف نشود، اینترنت شما دست‌نخورده باقی می‌ماند.`);
+        manager.log('error', `[gui] تونل بالا آمد اما ترافیک واقعی رد نمی‌کند (${result.error}). برای همین پراکسی سیستم روشن نشد و تا این مشکل حل نشود، اینترنت شما دست‌نخورده می‌ماند.`);
         send('tunnel:verify', { status: 'failed', error: result.error });
       }
     }
@@ -1472,7 +1472,7 @@ function registerIpc() {
     const configs = store.get('v2rayConfigs');
     const cfg = configs[id];
     if (!cfg) throw new Error('کانفیگ یافت نشد');
-    if (!cfg.outbound || !cfg.outbound.tls) throw new Error('این کانفیگ از TLS استفاده نمی‌کند (مثلاً WireGuard یا Shadowsocks ساده) — فرگمنت روی آن معنا ندارد.');
+    if (!cfg.outbound || !cfg.outbound.tls) throw new Error('این کانفیگ TLS ندارد (مثلاً WireGuard یا Shadowsocks ساده)، پس تکه‌کردن روی آن اثری ندارد.');
     cfg.outbound.tls.record_fragment = !!recordFragment;
     // set by hand: smart anti-DPI leaves this config alone from now on
     cfg.dpiManual = true;

@@ -305,10 +305,10 @@ function setTunBadge(tun) {
   if (!badge) return;
   const text = {
     starting: 'TUN: در حال ساخت آداپتور…',
-    up: 'TUN فعال — همه‌ی ترافیک سیستم از تونل می‌گذرد',
-    error: 'TUN شروع نشد — پراکسی سیستم جایگزین شد (لاگ‌ها را ببینید)',
-    'needs-admin': 'TUN نیاز به Administrator دارد — پراکسی سیستم جایگزین شد',
-    'missing-singbox': 'TUN نیاز به هسته‌ی sing-box دارد — از تب کانفیگ‌ها دانلود کنید'
+    up: 'TUN روشن است و همه‌ی ترافیک سیستم از تونل می‌رود',
+    error: 'TUN بالا نیامد، به‌جایش پراکسی سیستم روشن شد (لاگ را ببینید)',
+    'needs-admin': 'TUN دسترسی Administrator می‌خواهد، به‌جایش پراکسی سیستم روشن شد',
+    'missing-singbox': 'TUN هسته‌ی sing-box لازم دارد. از تب کانفیگ‌ها دانلودش کنید'
   }[tun && tun.status];
   badge.style.display = text ? 'block' : 'none';
   badge.className = `tun-badge ${tun ? tun.status : ''}`;
@@ -350,10 +350,10 @@ function setTunnelBanner(data) {
     banner.textContent = 'در حال بررسی اینکه تونل واقعاً ترافیک رد می‌کند…';
   } else if (data.status === 'ok') {
     banner.textContent = data.mode === 'tun'
-      ? '✅ تونل تأیید شد — در حال فعال‌سازی TUN (کل سیستم، بدون پراکسی)…'
-      : '✅ تونل تأیید شد — پراکسی سیستم فعال است.';
+      ? '✅ تونل سالم است. در حال روشن کردن TUN برای کل سیستم…'
+      : '✅ تونل سالم است و پراکسی سیستم روشن شد.';
   } else if (data.status === 'failed') {
-    banner.textContent = `❌ بررسی تونل ناموفق بود (${data.error || ''}). پراکسی سیستم فعال نشد — اینترنت شما دست‌نخورده است. جزئیات هر تلاش در تب لاگ است.`;
+    banner.textContent = `❌ بررسی تونل ناموفق بود (${data.error || ''}). برای همین پراکسی سیستم روشن نشد و اینترنت شما دست‌نخورده ماند. جزئیات در تب لاگ است.`;
     // the check can be wrong (a filtered probe URL); let the user decide
     const go = el('button', { class: 'btn ghost small', style: 'margin-top:8px', type: 'button' }, 'ادامه به هر حال (فعال کردن پراکسی/TUN)');
     go.addEventListener('click', async () => {
@@ -833,7 +833,7 @@ async function wireUpdateTab() {
     if (data.phase === 'error') {
       // the GUI's own release feed isn't published yet, so GitHub answers 404 with a whole HTML page
       progressWrap.classList.remove('active');
-      statusEl.textContent = `خطا: ${shortError(data.error)} — می‌توانید از «صفحه‌ی انتشارها» دستی دانلود کنید.`;
+      statusEl.textContent = `خطا: ${shortError(data.error)} . می‌توانید از «صفحه‌ی انتشارها» دستی دانلود کنید.`;
     }
   });
 }
@@ -987,11 +987,11 @@ async function wireScannerTab() {
     cancelBtn.disabled = false;
     consoleEl.style.display = 'block';
     consoleEl.textContent = '';
-    statusEl.textContent = 'در حال اسکن — این فرآیند ممکن است چند دقیقه طول بکشد…';
+    statusEl.textContent = 'در حال اسکن… ممکن است چند دقیقه طول بکشد.';
 
     try {
       const results = await window.aether.runScan({ maxLatencyMs: maxLatency, count, skipDownloadTest: true, maxIpsToScan });
-      statusEl.textContent = `اسکن تمام شد — ${results.length} نتیجه یافت شد.`;
+      statusEl.textContent = `اسکن تمام شد: ${results.length} نتیجه پیدا شد.`;
       renderScanResults(results);
     } catch (err) {
       statusEl.textContent = `خطا در اسکن: ${err.message || err}`;
@@ -1014,7 +1014,7 @@ async function wireScannerTab() {
     try {
       const results = await window.aether.importScanFile();
       if (results === null) return; // user cancelled
-      statusEl.textContent = `فایل ایمپورت شد — ${results.length} IP یافت شد.`;
+      statusEl.textContent = `فایل خوانده شد: ${results.length} IP پیدا شد.`;
       renderScanResults(results);
     } catch (err) {
       statusEl.textContent = `خطا در خواندن فایل: ${err.message || err}`;
@@ -1069,7 +1069,7 @@ async function wireTorTab() {
     document.getElementById('tor-mode').value = info.mode;
     const c = info.bridges || {};
     const when = info.bridgesUpdatedAt ? new Date(info.bridgesUpdatedAt).toLocaleString('fa-IR') : 'نسخه‌ی همراه برنامه';
-    document.getElementById('tor-bridge-info').textContent = `پل‌ها: obfs4 ${c.obfs4 || 0} · webtunnel ${c.webtunnel || 0} · ساده ${c.vanilla || 0} · snowflake ${c.snowflake || 0} — آخرین به‌روزرسانی: ${when}`;
+    document.getElementById('tor-bridge-info').textContent = `پل‌ها: obfs4 ${c.obfs4 || 0} · webtunnel ${c.webtunnel || 0} · ساده ${c.vanilla || 0} · snowflake ${c.snowflake || 0} · آخرین به‌روزرسانی: ${when}`;
     refreshDashboardMeta();
   }
   await refresh();
@@ -1829,7 +1829,7 @@ async function wireRoutingCard() {
   const ver = document.getElementById('routing-version');
   mode.value = r.mode; direct.value = r.direct; proxy.value = r.proxy;
   const paint = () => {
-    hint.textContent = ROUTING_HINTS[mode.value] + (mode.value !== 'all' && !r.hasSingbox ? ' — هسته‌ی sing-box هنوز نصب نیست.' : '');
+    hint.textContent = ROUTING_HINTS[mode.value] + (mode.value !== 'all' && !r.hasSingbox ? ' (هسته‌ی sing-box هنوز نصب نیست.)' : '');
     ver.textContent = mode.value === 'iran' ? `نسخه‌ی قوانین: ${r.version}` : '';
     paintRouteChip(mode.value);
   };
@@ -1874,6 +1874,114 @@ async function wireCustomBridges() {
   document.getElementById('tor-custom-save').addEventListener('click', save);
   only.addEventListener('change', save);
 }
+// ---------- Privacy / support the developer (home screen) ----------
+// Paste the addresses here; an empty address shows "coming soon" and no copy button.
+const WALLETS = [
+  { coin: 'USDT', network: 'TRC20 (Tron)', address: '' },
+  { coin: 'TON', network: 'TON', address: '' },
+  { coin: 'BTC', network: 'Bitcoin', address: '' },
+  { coin: 'ETH', network: 'Ethereum (ERC20)', address: '' },
+];
+
+const PRIVACY_FA = `خلاصه: GozarVpn حساب کاربری و ثبت‌نام ندارد و هیچ آمار، تبلیغ یا ردیابی‌ای داخلش نیست. سازنده‌ی برنامه سروری ندارد و هیچ اطلاعاتی از شما، کانفیگ‌هایتان یا سایت‌هایی که باز می‌کنید به دستش نمی‌رسد.
+
+چه چیزهایی روی کامپیوتر خودتان می‌ماند
+• کانفیگ‌ها، ساب‌ها، پروفایل‌ها و تنظیمات فقط روی همین کامپیوتر ذخیره می‌شوند.
+• نام کاربری و رمز OpenVPN با رمزنگاری خود ویندوز نگه داشته می‌شود.
+• لاگ در حافظه است و ذخیره نمی‌شود، مگر خودتان کپی یا ذخیره‌اش کنید.
+
+برنامه خودش به کجاها وصل می‌شود
+• سرورهایی که خودتان انتخاب کرده‌اید و شبکه‌ی موتوری که روشن است (WARP کلودفلر، Tor، سایفون یا OpenVPN).
+• تست پینگ و سالم بودن تونل: یک درخواست خیلی کوچک به گوگل یا کلودفلر، از داخل همان تونل.
+• نشان دادن IP و کشور خروجی: صفحه‌ی trace کلودفلر، از داخل تونل.
+• لینک سابی که خودتان اضافه کرده‌اید، برای گرفتن و به‌روز کردن کانفیگ‌ها.
+• ساخت WARP رایگان: فقط وقتی دکمه‌اش را بزنید، یک اکانت WARP از کلودفلر گرفته می‌شود.
+• دانلود هسته‌ها (Aether، sing-box، mihomo، Tor) از صفحه‌ی رسمی خودشان در GitHub یا سایت Tor، و نصب‌کننده‌ی OpenVPN از سایت OpenVPN، فقط وقتی خودتان دکمه‌اش را بزنید.
+• پیدا کردن نسخه‌ی جدید: صفحه‌ی Releaseهای همین پروژه در GitHub. اگر نمی‌خواهید، «بررسی خودکار» را در بیشتر › به‌روزرسانی خاموش کنید.
+• قوانین ایران (از jsDelivr) فقط وقتی دکمه‌ی به‌روزرسانی‌اش را بزنید.
+در هیچ‌کدام از این درخواست‌ها چیزی درباره‌ی شما یا کانفیگ‌هایتان فرستاده نمی‌شود.
+
+برنامه در ویندوز چه چیزهایی را تغییر می‌دهد
+• پراکسی سیستم: هنگام اتصال تنظیم می‌شود و بعد از قطع به حالت قبل برمی‌گردد.
+• دسترسی Administrator فقط برای حالت TUN، کیل‌سوییچ و OpenVPN لازم است.
+• کیل‌سوییچ (اگر روشنش کنید) قوانین فایروال ویندوز را اضافه می‌کند و با قطع اتصال برمی‌دارد.
+برنامه به فایل‌ها، دوربین، میکروفون یا برنامه‌های دیگر شما کاری ندارد.
+
+کد برنامه
+کد کامل GozarVpn با مجوز AGPL در github.com/falconf258/gozarVPN منتشر شده و هر کسی می‌تواند همه‌ی این‌ها را خودش بررسی کند.`;
+
+const PRIVACY_EN = `In short: GozarVpn has no account and no sign-up, and contains no analytics, ads or tracking. The developer runs no server and receives nothing about you, your configs or the sites you visit.
+
+What stays on your PC
+• Your configs, subscriptions, profiles and settings are stored only on this PC.
+• OpenVPN usernames and passwords are kept encrypted by Windows.
+• The log lives in memory and is not saved unless you copy or save it.
+
+Where the app itself connects
+• The servers you picked, and the network of the engine you turned on (Cloudflare WARP, Tor, Psiphon or OpenVPN).
+• Ping and tunnel checks: one tiny request to Google or Cloudflare, through the tunnel.
+• Showing your exit IP and country: Cloudflare's trace page, through the tunnel.
+• Subscription links you added, to fetch and refresh their configs.
+• Free WARP: only when you press its button, a WARP account is created at Cloudflare.
+• Engine downloads (Aether, sing-box, mihomo, Tor) from their official GitHub or Tor pages, and the OpenVPN installer from openvpn.org, only when you press the button.
+• New versions: this project's Releases page on GitHub. Turn off "check automatically" under More › Update if you don't want that.
+• Iran rules (from jsDelivr) only when you press their update button.
+None of these requests send anything about you or your configs.
+
+What the app changes in Windows
+• The system proxy: set while connected, put back as it was when you disconnect.
+• Administrator rights are needed only for TUN mode, the kill switch and OpenVPN.
+• The kill switch (if you turn it on) adds Windows Firewall rules and removes them when you disconnect.
+The app does not touch your files, camera, microphone or other programs.
+
+Source code
+GozarVpn is open source (AGPL) at github.com/falconf258/gozarVPN, so anyone can check all of this.`;
+
+function infoModal(title, body, extraButtons = []) {
+  const overlay = el('div', { class: 'modal-overlay' });
+  const close = el('button', { class: 'btn primary' }, 'بستن');
+  overlay.appendChild(el('div', { class: 'modal-box', role: 'dialog' }, [el('h3', {}, title), body, el('div', { class: 'modal-actions' }, [close, ...extraButtons])]));
+  const done = () => { overlay.remove(); document.removeEventListener('keydown', onKey, true); };
+  const onKey = (e) => { if (e.key === 'Escape') done(); };
+  close.addEventListener('click', done);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) done(); });
+  document.addEventListener('keydown', onKey, true);
+  document.body.appendChild(overlay);
+  close.focus();
+}
+
+function showPrivacy() {
+  let english = false;
+  const text = el('div', { class: 'info-text' }, PRIVACY_FA);
+  const toggle = el('button', { class: 'btn ghost' }, 'English');
+  toggle.addEventListener('click', () => {
+    english = !english;
+    text.textContent = english ? PRIVACY_EN : PRIVACY_FA;
+    text.dir = english ? 'ltr' : 'rtl';
+    toggle.textContent = english ? 'فارسی' : 'English';
+  });
+  infoModal('حریم خصوصی · Privacy', text, [toggle]);
+}
+
+function showDonate() {
+  const rows = WALLETS.map((w) => {
+    const head = el('div', { style: 'display:flex;align-items:center;gap:8px' }, [el('b', { style: 'flex:1' }, `${w.coin} · ${w.network}`)]);
+    if (w.address) {
+      const copy = el('button', { class: 'btn ghost small' }, 'کپی');
+      copy.addEventListener('click', async () => { await navigator.clipboard.writeText(w.address); copy.textContent = 'کپی شد ✓'; setTimeout(() => { copy.textContent = 'کپی'; }, 1500); });
+      head.appendChild(copy);
+    }
+    return el('div', { class: 'wallet-row' }, [head, w.address ? el('div', { class: 'wallet-addr' }, w.address) : el('div', { class: 'muted', style: 'font-size:12px' }, 'به‌زودی')]);
+  });
+  const body = el('div', { class: 'info-text' }, [
+    el('p', { style: 'margin-top:0' }, 'اگر GozarVpn به کارتان آمده و دوست دارید حمایت کنید، می‌توانید به یکی از این آدرس‌ها رمزارز بفرستید. حمایت کاملاً اختیاری است و هیچ بخشی از برنامه به آن بستگی ندارد.'),
+    el('p', {}, 'قبل از ارسال، شبکه را با دقت انتخاب کنید. ارسال روی شبکه‌ی اشتباه برگشت ندارد.'),
+    ...rows,
+    el('p', { class: 'muted', dir: 'ltr', style: 'font-size:11.5px' }, 'If GozarVpn helps you, you can support it with crypto. It is completely optional and changes nothing in the app.'),
+  ]);
+  infoModal('حمایت از سازنده', body);
+}
+
 // ---------- OpenVPN tab ----------
 let refreshOpenvpnTab = async () => {};
 async function wireOpenvpnTab() {
@@ -2052,6 +2160,8 @@ async function init() {  state.schema = await window.aether.getEnvSchema();
   await wireTorTab();
   await wirePsiphonTab();
   await wireOpenvpnTab();
+  document.getElementById('open-privacy').addEventListener('click', showPrivacy);
+  document.getElementById('open-donate').addEventListener('click', showDonate);
   await wireRoutingCard();
   await wireCustomBridges();
   wireLiveStats();

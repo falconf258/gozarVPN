@@ -59,6 +59,8 @@ fun HomeScreen(vm: AppViewModel, app: AppState, vpn: VpnUiState, onToggle: () ->
     val engine = s.engine
     val busy = vpn.status == VpnStatus.Connected || vpn.status == VpnStatus.Starting
     val connected = vpn.status == VpnStatus.Connected
+    var privacy by remember { mutableStateOf(false) }
+    var donate by remember { mutableStateOf(false) }
     val (c1, c2) = engineColors(engine)
     val stateColor = when (vpn.status) {
         VpnStatus.Connected -> Good; VpnStatus.Starting -> Warn; VpnStatus.Error -> Bad; VpnStatus.Stopped -> Muted; VpnStatus.Paused -> Warn
@@ -102,6 +104,11 @@ fun HomeScreen(vm: AppViewModel, app: AppState, vpn: VpnUiState, onToggle: () ->
     ) {
         Header(label, stateColor)
         Spacer(Modifier.height(6.dp))
+        // privacy on the physical right, support on the physical left, whatever the layout direction
+        Box(Modifier.fillMaxWidth()) {
+            CornerButton("🔒 حریم خصوصی", Color.White, Modifier.align(androidx.compose.ui.AbsoluteAlignment.CenterRight)) { privacy = true }
+            CornerButton("♥ حمایت", Color(0xFFFDA4AF), Modifier.align(androidx.compose.ui.AbsoluteAlignment.CenterLeft)) { donate = true }
+        }
         ConnectOrb(vpn.status, c1, c2, stateColor, clock, onToggle)
         Spacer(Modifier.height(8.dp))
 
@@ -192,18 +199,22 @@ fun HomeScreen(vm: AppViewModel, app: AppState, vpn: VpnUiState, onToggle: () ->
             EngineOptions(vm, app, busy)
             if (busy) Hint("برای تعویض موتور یا روش، اول قطع کنید.")
         }
-        Spacer(Modifier.height(4.dp))
-        var privacy by remember { mutableStateOf(false) }
-        var donate by remember { mutableStateOf(false) }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            androidx.compose.material3.TextButton({ privacy = true }) { Text("🔒 حریم خصوصی", color = Muted, fontSize = 12.5.sp) }
-            androidx.compose.material3.TextButton({ donate = true }) { Text("♥ حمایت از سازنده", color = Muted, fontSize = 12.5.sp) }
-        }
         if (privacy) PrivacyDialog { privacy = false }
         if (donate) DonateDialog { donate = false }
         // room to scroll the last card fully clear of the bottom bar
         Spacer(Modifier.height(32.dp))
     }
+}
+
+/** A visible pill button for the home screen's top corners. */
+@Composable
+private fun CornerButton(text: String, tint: Color, modifier: Modifier, onClick: () -> Unit) {
+    Text(
+        text, color = tint, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+        modifier = modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.08f))
+            .border(1.dp, Color.White.copy(alpha = 0.16f), RoundedCornerShape(50))
+            .clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 8.dp),
+    )
 }
 
 @Composable

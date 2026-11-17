@@ -96,6 +96,8 @@ class TorBundle {
   }
 
   async install(onProgress, socksAddr, beforeSwap) {
+    // the bundled version is already in place: nothing to download
+    if (this.hasBinary() && this.getInstalledVersion() === BUNDLE_VERSION) return { updated: false, version: BUNDLE_VERSION };
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'gozarvpn-torzip-'));
     const archive = path.join(tmp, `${BUNDLE_NAME}.tar.gz`);
     try {

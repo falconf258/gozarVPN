@@ -821,10 +821,13 @@ function registerIpc() {
   // --- OpenVPN ---
   ipcMain.handle('openvpn:list', async () => {
     openvpnExe = await openvpn.findOpenVpn(store.get('ui').openvpnExe);
+    const version = openvpnExe ? await openvpn.versionOf(openvpnExe) : null;
     return {
       profiles: Object.values(openvpnProfiles()).sort((a, b) => a.addedAt - b.addedAt).map(openvpnSummary),
       active: store.get('activeOpenvpnProfile') || null,
-      exe: openvpnExe, version: openvpnExe ? await openvpn.versionOf(openvpnExe) : null,
+      exe: openvpnExe, version,
+      // install / installed / update, against the official version we offer
+      installState: openvpn.installState(openvpnExe ? version || '0' : null), offered: openvpn.INSTALLER_VERSION,
     };
   });
   ipcMain.handle('openvpn:importText', (_e, text, name) => addOpenvpnProfile(text, name));
@@ -888,12 +891,23 @@ function registerIpc() {
   });
   // downloads the official installer, checks it is signed by OpenVPN Inc., then opens it (UAC + setup wizard)
   ipcMain.handle('openvpn:install', async () => {
+    // already installed and current: nothing to download
+    const found = await openvpn.findOpenVpn(store.get('ui').openvpnExe);
+    const have = found ? await openvpn.versionOf(found) : null;
+    if (found && openvpn.installState(have) === 'installed') {
+      openvpnExe = found;
+      return { already: true, exe: found, version: have };
+    }
     const dir = path.join(app.getPath('userData'), 'openvpn');
     fs.mkdirSync(dir, { recursive: true });
     const msi = path.join(dir, path.basename(openvpn.INSTALLER_URL));
-    send('openvpn:installProgress', { stage: 'download', pct: 0 });
-    await tryDirectThenTunnel((socks) => downloadToFile(openvpn.INSTALLER_URL, msi, (pct) => send('openvpn:installProgress', { stage: 'download', pct }), socks), anyLiveTunnelSocksAddress());
-    const sig = await openvpn.checkSignature(msi);
+    // an installer downloaded earlier is reused when its signature is still valid
+    let sig = fs.existsSync(msi) ? await openvpn.checkSignature(msi) : { ok: false };
+    if (!sig.ok) {
+      send('openvpn:installProgress', { stage: 'download', pct: 0 });
+      await tryDirectThenTunnel((socks) => downloadToFile(openvpn.INSTALLER_URL, msi, (pct) => send('openvpn:installProgress', { stage: 'download', pct }), socks), anyLiveTunnelSocksAddress());
+      sig = await openvpn.checkSignature(msi);
+    }
     if (!sig.ok) { try { fs.unlinkSync(msi); } catch { /* gone */ } throw new Error(`امضای فایل نصب معتبر نیست (${sig.status || '?'}); نصب نشد.`); }
     send('openvpn:installProgress', { stage: 'install' });
     const err = await shell.openPath(msi);

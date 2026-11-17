@@ -1086,8 +1086,8 @@ async function wireTorTab() {
     statusEl.textContent = 'در حال دانلود Tor (حدود ۴۰ مگابایت)… اگر GitHub/سایت Tor فیلتر است، ابتدا با یک موتور دیگر وصل شوید.';
     wrap.classList.add('active');
     try {
-      await window.aether.installTor();
-      statusEl.textContent = 'Tor نصب شد.';
+      const r = await window.aether.installTor();
+      statusEl.textContent = r && r.updated === false ? `Tor نسخه‌ی ${r.version} از قبل نصب است؛ دانلود لازم نبود.` : 'Tor نصب شد.';
       await refresh();
     } catch (err) {
       statusEl.textContent = `خطا: ${err.message || err}`;
@@ -1995,7 +1995,14 @@ async function wireOpenvpnTab() {
     exeStatus.textContent = data.exe
       ? `✓ OpenVPN ${data.version || ''} پیدا شد: ${data.exe}`
       : '⚠ برنامه‌ی رسمی OpenVPN (Community) نصب نیست. «دانلود و نصب» فایل نصب رسمی را می‌گیرد، امضای OpenVPN Inc. را بررسی و نصب‌کننده را باز می‌کند (می‌توانید مسیر نصب را روی درایو دیگری بگذارید). اگر جای دیگری نصبش کرده‌اید، openvpn.exe را انتخاب کنید.';
-    document.getElementById('openvpn-install').textContent = data.exe ? 'نصب دوباره / به‌روزرسانی OpenVPN' : 'دانلود و نصب OpenVPN رسمی';
+    const installBtn = document.getElementById('openvpn-install');
+    installBtn.textContent = {
+      install: 'دانلود و نصب OpenVPN رسمی',
+      installed: `نصب است ✓ (نسخه‌ی ${data.version || ''})`,
+      update: `به‌روزرسانی به نسخه‌ی ${data.offered}`,
+    }[data.installState];
+    // nothing to download when the installed copy is already current
+    installBtn.disabled = data.installState === 'installed';
     const active = data.profiles.find((p) => p.id === data.active);
     state.openvpnName = active ? active.name : '';
     refreshDashboardMeta();
@@ -2097,13 +2104,24 @@ async function wireOpenvpnTab() {
     e.target.disabled = true;
     progress.classList.add('active');
     try {
-      await window.aether.installOpenvpn();
-      exeStatus.textContent = 'نصب‌کننده‌ی رسمی (امضاشده توسط OpenVPN Inc.) باز شد. نصب را تمام کنید و بعد این تب را دوباره باز کنید.';
+      const r = await window.aether.installOpenvpn();
+      if (r && r.already) {
+        exeStatus.textContent = `OpenVPN از قبل نصب است (نسخه‌ی ${r.version}) و همان استفاده می‌شود: ${r.exe}`;
+      } else {
+        exeStatus.textContent = 'نصب‌کننده‌ی رسمی (امضاشده توسط OpenVPN Inc.) باز شد. نصب را تمام کنید؛ این صفحه خودش متوجه می‌شود.';
+        // notice when the setup wizard has finished (checked every 5 s for 15 minutes)
+        const before = (await window.aether.listOpenvpn()).version;
+        for (let i = 0; i < 180; i++) {
+          await new Promise((res) => setTimeout(res, 5000));
+          const now = await window.aether.listOpenvpn();
+          if (now.exe && now.version !== before) { exeStatus.textContent = `✓ OpenVPN ${now.version} نصب شد.`; break; }
+        }
+      }
     } catch (err) {
       exeStatus.textContent = `خطا: ${err.message || err}`;
     } finally {
-      e.target.disabled = false;
       progress.classList.remove('active');
+      await refreshOpenvpnTab();
     }
   });
   window.aether.onOpenvpnInstallProgress((p) => {

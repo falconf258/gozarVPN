@@ -464,6 +464,21 @@ async function testProfile(exe, profile, { creds, runDir, timeoutMs = 20000 } = 
 /* ------------------------------ official installer ------------------------------ */
 
 const INSTALLER_URL = 'https://swupdate.openvpn.org/community/releases/OpenVPN-2.7.9-I001-amd64.msi';
+const INSTALLER_VERSION = INSTALLER_URL.match(/OpenVPN-(\d+\.\d+\.\d+)/)[1];
+
+/** -1 / 0 / 1 for "2.6.12" vs "2.7.9" (suffixes like "_git" are ignored). */
+function cmpVersion(a, b) {
+  const pa = String(a).split(/[^\d]+/).filter(Boolean).map(Number);
+  const pb = String(b).split(/[^\d]+/).filter(Boolean).map(Number);
+  for (let i = 0; i < 3; i++) { const d = (pa[i] || 0) - (pb[i] || 0); if (d) return d > 0 ? 1 : -1; }
+  return 0;
+}
+
+/** What the install button should do: install (none found), installed (same or newer), update (older). */
+function installState(installedVersion) {
+  if (!installedVersion) return 'install';
+  return cmpVersion(installedVersion, INSTALLER_VERSION) >= 0 ? 'installed' : 'update';
+}
 
 /** Accepts the installer only with a valid Authenticode signature from OpenVPN Inc. */
 function checkSignature(file) {
@@ -476,4 +491,4 @@ function checkSignature(file) {
   });
 }
 
-module.exports = { runOpenVpn, parseOvpn, buildConfig, cidrToRoute, words, findOpenVpn, versionOf, OpenVpnManager, testProfile, killLeftovers, checkSignature, INSTALLER_URL };
+module.exports = { runOpenVpn, parseOvpn, buildConfig, cidrToRoute, words, findOpenVpn, versionOf, OpenVpnManager, testProfile, killLeftovers, checkSignature, INSTALLER_URL, INSTALLER_VERSION, cmpVersion, installState };

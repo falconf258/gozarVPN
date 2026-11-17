@@ -35,10 +35,10 @@ data class Wallet(val coin: String, val network: String, val address: String)
 
 /** Paste the addresses here; nothing else needs to change. */
 val WALLETS = listOf(
-    Wallet("USDT", "TRC20 (Tron)", ""),
-    Wallet("TON", "TON", ""),
-    Wallet("BTC", "Bitcoin", ""),
-    Wallet("ETH", "Ethereum (ERC20)", ""),
+    Wallet("USDT (TRC20) / TRX", "Tron", "TXh8EGxoGRpdscTqZoAm2LuJHdgQRYZVfC"),
+    Wallet("SOL", "Solana", "BwbHCzTcPpznnfa6ST6JtsabmRvVYQDKgKACCyaGsnsR"),
+    Wallet("BTC", "Bitcoin", "bc1qtysesd8c0sm2sa4dykhc3l52p9thxn6j06etld"),
+    Wallet("ETH", "Ethereum (ERC20)", "0xA84B654E5b22AaF2326a690f06AF4044d6e0a4b3"),
 )
 
 private const val PRIVACY_FA = """
@@ -134,7 +134,7 @@ fun DonateDialog(onClose: () -> Unit) {
             Column(Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
                     "اگر GozarVpn به کارتان آمده و دوست دارید حمایت کنید، می‌توانید به یکی از این آدرس‌ها رمزارز بفرستید. حمایت کاملاً اختیاری است و هیچ بخشی از برنامه به آن بستگی ندارد.\n\n" +
-                        "قبل از ارسال، شبکه را با دقت انتخاب کنید. ارسال روی شبکه‌ی اشتباه برگشت ندارد.",
+                        "هر ارز را فقط روی شبکه‌ی همان ردیف بفرستید؛ مثلاً USDT فقط روی Tron (TRC20). ارسال روی شبکه‌ی اشتباه برگشت ندارد.",
                     fontSize = 13.sp, lineHeight = 21.sp,
                 )
                 for (w in WALLETS) {

@@ -1877,10 +1877,10 @@ async function wireCustomBridges() {
 // ---------- Privacy / support the developer (home screen) ----------
 // Paste the addresses here; an empty address shows "coming soon" and no copy button.
 const WALLETS = [
-  { coin: 'USDT', network: 'TRC20 (Tron)', address: '' },
-  { coin: 'TON', network: 'TON', address: '' },
-  { coin: 'BTC', network: 'Bitcoin', address: '' },
-  { coin: 'ETH', network: 'Ethereum (ERC20)', address: '' },
+  { coin: 'USDT (TRC20) / TRX', network: 'Tron', address: 'TXh8EGxoGRpdscTqZoAm2LuJHdgQRYZVfC' },
+  { coin: 'SOL', network: 'Solana', address: 'BwbHCzTcPpznnfa6ST6JtsabmRvVYQDKgKACCyaGsnsR' },
+  { coin: 'BTC', network: 'Bitcoin', address: 'bc1qtysesd8c0sm2sa4dykhc3l52p9thxn6j06etld' },
+  { coin: 'ETH', network: 'Ethereum (ERC20)', address: '0xA84B654E5b22AaF2326a690f06AF4044d6e0a4b3' },
 ];
 
 const PRIVACY_FA = `خلاصه: GozarVpn حساب کاربری و ثبت‌نام ندارد و هیچ آمار، تبلیغ یا ردیابی‌ای داخلش نیست. سازنده‌ی برنامه سروری ندارد و هیچ اطلاعاتی از شما، کانفیگ‌هایتان یا سایت‌هایی که باز می‌کنید به دستش نمی‌رسد.
@@ -1975,7 +1975,7 @@ function showDonate() {
   });
   const body = el('div', { class: 'info-text' }, [
     el('p', { style: 'margin-top:0' }, 'اگر GozarVpn به کارتان آمده و دوست دارید حمایت کنید، می‌توانید به یکی از این آدرس‌ها رمزارز بفرستید. حمایت کاملاً اختیاری است و هیچ بخشی از برنامه به آن بستگی ندارد.'),
-    el('p', {}, 'قبل از ارسال، شبکه را با دقت انتخاب کنید. ارسال روی شبکه‌ی اشتباه برگشت ندارد.'),
+    el('p', {}, 'هر ارز را فقط روی شبکه‌ی همان ردیف بفرستید؛ مثلاً USDT فقط روی Tron (TRC20). ارسال روی شبکه‌ی اشتباه برگشت ندارد.'),
     ...rows,
     el('p', { class: 'muted', dir: 'ltr', style: 'font-size:11.5px' }, 'If GozarVpn helps you, you can support it with crypto. It is completely optional and changes nothing in the app.'),
   ]);

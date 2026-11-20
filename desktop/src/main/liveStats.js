@@ -11,12 +11,16 @@ const { SocksProxyAgent } = require('socks-proxy-agent');
  * one long-lived PowerShell (virtual adapters, incl. our own TUN, are skipped so TUN mode
  * isn't counted twice). While connected nearly all of that traffic is the tunnel's.
  */
+// second pair: the tunnel adapters (our TUN, OpenVPN's), i.e. what apps sent through the VPN
 const SCRIPT = `
 $ErrorActionPreference = 'SilentlyContinue'
 while ($true) {
-  $rx = 0; $tx = 0
-  Get-CimInstance Win32_PerfRawData_Tcpip_NetworkInterface | Where-Object { $_.Name -notmatch 'wintun|gozar|tunnel|loopback|isatap|teredo|virtual|vethernet|hyper-v|vmware|virtualbox|pseudo' } | ForEach-Object { $rx += [double]$_.BytesReceivedPersec; $tx += [double]$_.BytesSentPersec }
-  [Console]::Out.WriteLine("$rx $tx")
+  $rx = 0; $tx = 0; $trx = 0; $ttx = 0
+  Get-CimInstance Win32_PerfRawData_Tcpip_NetworkInterface | ForEach-Object {
+    if ($_.Name -match 'wintun|gozar|openvpn|tap-windows|data channel offload') { $trx += [double]$_.BytesReceivedPersec; $ttx += [double]$_.BytesSentPersec }
+    elseif ($_.Name -notmatch 'tunnel|loopback|isatap|teredo|virtual|vethernet|hyper-v|vmware|virtualbox|pseudo|wireguard') { $rx += [double]$_.BytesReceivedPersec; $tx += [double]$_.BytesSentPersec }
+  }
+  [Console]::Out.WriteLine("$rx $tx $trx $ttx")
   [Console]::Out.Flush()
   Start-Sleep -Milliseconds 1000
 }`;
@@ -39,16 +43,18 @@ class LiveStats extends EventEmitter {
       const lines = buf.split(/\r?\n/);
       buf = lines.pop();
       for (const line of lines) {
-        const [rx, tx] = line.trim().split(/\s+/).map(Number);
+        const [rx, tx, trx = 0, ttx = 0] = line.trim().split(/\s+/).map(Number);
         if (!Number.isFinite(rx) || !Number.isFinite(tx)) continue;
         if (!base) base = { rx, tx };
         if (last) {
+          // a counter that went down (adapter re-created) counts as zero for that second
           this.emit('stats', {
             down: Math.max(0, rx - last.rx), up: Math.max(0, tx - last.tx),
-            totalDown: Math.max(0, rx - base.rx), totalUp: Math.max(0, tx - base.tx)
+            totalDown: Math.max(0, rx - base.rx), totalUp: Math.max(0, tx - base.tx),
+            tunDown: Math.max(0, trx - last.trx), tunUp: Math.max(0, ttx - last.ttx),
           });
         }
-        last = { rx, tx };
+        last = { rx, tx, trx, ttx };
       }
     });
     proc.on('exit', () => { if (this.proc === proc) this.proc = null; });

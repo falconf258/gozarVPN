@@ -23,6 +23,7 @@ const { testOutbound } = require('./singboxTester');
 const { testMany, tunInterceptsTcp } = require('./singboxBatchTester');
 const { verifyTunnel } = require('./connectivityCheck');
 const { SelfUpdater, RELEASES_PAGE } = require('./selfUpdate');
+const { TrafficLog, viewRange } = require('./trafficLog');
 const { createTray } = require('./tray');
 const { ENV_SCHEMA } = require('./constants');
 const psiphon = require('./psiphon');
@@ -87,6 +88,10 @@ function uiRouting() {
   return { mode: ui.routingMode || 'iran', direct: ui.routeDirect || '', proxy: ui.routeProxy || '' };
 }
 const systemProxy = new SystemProxy(path.join(app.getPath('userData'), 'system-proxy-backup.json'));
+// data-usage history (hourly, kept only on this PC); written every minute and on quit
+const trafficLog = new TrafficLog(path.join(app.getPath('userData'), 'traffic.json'));
+setInterval(() => { try { trafficLog.flush(); } catch { /* disk busy: next minute */ } }, 60000).unref();
+const trafficEngine = () => { const e = activeEngine(); return e === 'singbox' && activeV2rayConfig() && activeV2rayConfig().awg ? 'awg' : e; };
 const killSwitch = new KillSwitch(path.join(app.getPath('userData'), 'killswitch-state.json'));
 
 function ksState() {
@@ -676,7 +681,10 @@ function wireCoreEvents() {
     if (activeEngine() !== 'openvpn') return;
     queueLog(entry);
   });
-  liveStats.on('stats', (s) => send('stats:update', s));
+  liveStats.on('stats', (s) => {
+    send('stats:update', s);
+    trafficLog.add(trafficEngine(), { netDown: s.down, netUp: s.up, tunDown: s.tunDown, tunUp: s.tunUp });
+  });
 
   singboxManager.on('status', (state) => {
     if (!state.running && awgHelper.proc) awgHelper.stop();
@@ -817,6 +825,20 @@ function registerIpc() {
 
   ipcMain.handle('core:stop', async () => { const r = activeManager().stop(); await ksDisarm(); return r; });
   ipcMain.handle('killswitch:state', () => ksState());
+
+  // --- data usage history ---
+  ipcMain.handle('traffic:query', (_e, { view, from, to }) => {
+    const r = viewRange(view, Date.now(), from, to);
+    return trafficLog.query(r.from, r.to, r.unit);
+  });
+  ipcMain.handle('traffic:exportCsv', async (_e, { view, from, to }) => {
+    const r = viewRange(view, Date.now(), from, to);
+    const res = await dialog.showSaveDialog(mainWindow, { title: 'ذخیره‌ی آمار مصرف', defaultPath: `gozarvpn-traffic-${new Date().toISOString().slice(0, 10)}.csv`, filters: [{ name: 'CSV', extensions: ['csv'] }] });
+    if (res.canceled || !res.filePath) return false;
+    fs.writeFileSync(res.filePath, '\uFEFF' + trafficLog.csv(r.from, r.to), 'utf8');
+    return true;
+  });
+  ipcMain.handle('traffic:reset', () => { trafficLog.reset(); return true; });
 
   // --- OpenVPN ---
   ipcMain.handle('openvpn:list', async () => {
@@ -1593,6 +1615,7 @@ app.on('before-quit', () => {
   if (systemProxy.applied) systemProxy.restore().catch(() => {});
   if (killSwitch.armed || killSwitch.leftover()) killSwitch.disarmSync();
   if (selfUpdater.downloaded && !selfUpdater.portableDir) selfUpdater.install({ restart: false });
+  try { trafficLog.flush(); } catch { /* best-effort */ }
 });
 
 app.on('window-all-closed', () => {

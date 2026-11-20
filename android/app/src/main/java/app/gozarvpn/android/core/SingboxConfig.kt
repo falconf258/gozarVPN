@@ -75,8 +75,10 @@ object SingboxConfig {
             put("log", buildJsonObject { put("level", "info"); put("timestamp", true); put("output", LOG_FILE) })
             // apps cache fake IPs across restarts; without a stored mapping sing-box logs
             // "missing fakeip record" and those connections fail (seen in the Clash log)
-            if (socksEngine) put("experimental", buildJsonObject {
-                put("cache_file", buildJsonObject { put("enabled", true); put("path", "cache.db"); put("store_fakeip", true) })
+            put("experimental", buildJsonObject {
+                if (socksEngine) put("cache_file", buildJsonObject { put("enabled", true); put("path", "cache.db"); put("store_fakeip", true) })
+                // loopback-only stats endpoint (with a per-run secret) for the data-usage history
+                put("clash_api", buildJsonObject { put("external_controller", "127.0.0.1:${TrafficApi.PORT}"); put("secret", TrafficApi.secret) })
             })
             put("dns", buildJsonObject {
                 put("servers", buildJsonArray {

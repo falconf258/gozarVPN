@@ -376,6 +376,24 @@ input[type=checkbox]:checked::after { transform: translateX(-16px); background: 
 .corner-btn:hover { background: rgba(255,255,255,.14); transform: translateY(-1px); }
 .corner-btn:focus-visible { outline: 2px solid var(--accent, #fb923c); outline-offset: 2px; }
 .corner-btn.donate { color: #fda4af; }
+.traffic-range[hidden] { display: none; }
+.traffic-range { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0; font-size: 12.5px; }
+.traffic-range input { background: rgba(255,255,255,.06); color: inherit; border: 1px solid rgba(255,255,255,.15); border-radius: 8px; padding: 4px 6px; }
+.traffic-totals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0; }
+.traffic-totals .tt { background: rgba(255,255,255,.04); border-radius: 12px; padding: 8px 10px; min-width: 0; }
+.traffic-totals .tt b { display: block; font-size: 15px; direction: ltr; text-align: right; }
+.traffic-totals .tt small { color: var(--muted); font-size: 11.5px; }
+.traffic-totals .tt.wide { grid-column: span 2; }
+.traffic-chart { display: flex; align-items: flex-end; gap: 2px; height: 120px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.12); overflow: hidden; }
+.traffic-chart .bar { flex: 1 1 0; min-width: 2px; display: flex; flex-direction: column-reverse; height: 100%; justify-content: flex-start; }
+.traffic-chart .bar i { display: block; border-radius: 2px 2px 0 0; }
+.traffic-chart .bar i.down, .traffic-legend .sw.down { background: #38bdf8; }
+.traffic-chart .bar i.up, .traffic-legend .sw.up { background: #fb7185; }
+.traffic-axis { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); direction: ltr; margin-top: 2px; }
+.traffic-legend { font-size: 11.5px; color: var(--muted); margin: 6px 0 10px; }
+.traffic-legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: middle; margin: 0 2px 0 8px; }
+.traffic-eng { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; padding: 5px 0; border-top: 1px solid rgba(255,255,255,.06); }
+.traffic-eng span:last-child { direction: ltr; color: var(--muted); }
 .info-text { white-space: pre-wrap; font-size: 12.5px; line-height: 1.85; max-height: 60vh; overflow: auto; text-align: start; }
 .wallet-row { border-top: 1px solid rgba(255,255,255,.08); padding: 8px 0; }
 .wallet-addr { font-family: Consolas, monospace; font-size: 11.5px; direction: ltr; text-align: left; word-break: break-all; opacity: .8; }

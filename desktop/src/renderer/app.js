@@ -1874,6 +1874,84 @@ async function wireCustomBridges() {
   document.getElementById('tor-custom-save').addEventListener('click', save);
   only.addEventListener('change', save);
 }
+// ---------- Data usage history ----------
+const ENGINE_NAMES = { aether: 'Aether', singbox: 'V2ray', mihomo: 'Clash', tor: 'Tor', psiphon: 'سایفون', openvpn: 'OpenVPN', awg: 'AmneziaWG', other: 'دیگر' };
+
+async function wireTrafficTab() {
+  let view = 'hour';
+  const fromEl = document.getElementById('traffic-from');
+  const toEl = document.getElementById('traffic-to');
+  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const today = new Date();
+  toEl.value = iso(today);
+  fromEl.value = iso(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6));
+  const query = () => {
+    const q = { view };
+    if (view === 'range') { q.from = new Date(`${fromEl.value}T00:00`).getTime(); q.to = new Date(`${toEl.value}T00:00`).getTime(); }
+    return q;
+  };
+  const label = (t, unit) => {
+    const d = new Date(t);
+    if (unit === 'hour') return `${String(d.getHours()).padStart(2, '0')}:00`;
+    if (unit === 'month') return d.toLocaleDateString('fa-IR', { year: 'numeric', month: 'short' });
+    return d.toLocaleDateString('fa-IR', { month: 'short', day: 'numeric' });
+  };
+
+  async function render() {
+    let r;
+    try { r = await window.aether.trafficQuery(query()); } catch { return; }
+    const [nd, nu, td, tu] = r.total;
+    const box = (title, d, u, wide) => el('div', { class: `tt${wide ? ' wide' : ''}` }, [el('small', {}, title), el('b', {}, fmtBytes(d + u)), el('small', { dir: 'ltr', style: 'display:block;text-align:right' }, `↓ ${fmtBytes(d)}   ↑ ${fmtBytes(u)}`)]);
+    const totals = document.getElementById('traffic-totals');
+    totals.innerHTML = '';
+    totals.appendChild(box('اینترنت کامپیوتر (کارت شبکه)', nd, nu));
+    totals.appendChild(box('داخل تونل (TUN / OpenVPN)', td, tu));
+    // only hours where the tunnel was measured too, so proxy-mode hours do not inflate it
+    const [pn, pt] = r.paired;
+    if (pn > 0 && pt > 0) {
+      const extra = Math.round((pn / pt - 1) * 100);
+      totals.appendChild(el('div', { class: 'tt wide' }, [el('small', {}, 'سربار: اینترنت مصرفی نسبت به ترافیک داخل تونل (فقط ساعت‌هایی که هر دو اندازه گرفته شده)'), el('b', { dir: 'ltr', style: 'text-align:right' }, `${extra >= 0 ? '+' : ''}${extra}%`)]));
+    }
+    // bars: real network traffic, download stacked under upload
+    const chart = document.getElementById('traffic-chart');
+    chart.innerHTML = '';
+    const max = Math.max(1, ...r.rows.map((x) => x.v[0] + x.v[1]));
+    for (const row of r.rows) {
+      const bar = el('div', { class: 'bar', title: `${label(row.start, r.unit)}  ↓ ${fmtBytes(row.v[0])}  ↑ ${fmtBytes(row.v[1])}` });
+      bar.appendChild(el('i', { class: 'down', style: `height:${(row.v[0] / max) * 100}%` }));
+      bar.appendChild(el('i', { class: 'up', style: `height:${(row.v[1] / max) * 100}%` }));
+      chart.appendChild(bar);
+    }
+    const axis = chart.nextElementSibling && chart.nextElementSibling.classList.contains('traffic-axis') ? chart.nextElementSibling : chart.insertAdjacentElement('afterend', el('div', { class: 'traffic-axis' }));
+    axis.innerHTML = '';
+    if (r.rows.length) { axis.appendChild(el('span', {}, label(r.rows[0].start, r.unit))); axis.appendChild(el('span', {}, label(r.rows[r.rows.length - 1].start, r.unit))); }
+    const eng = document.getElementById('traffic-engines');
+    eng.innerHTML = '';
+    const list = Object.entries(r.engines).sort((a, b) => (b[1][0] + b[1][1]) - (a[1][0] + a[1][1]));
+    if (!list.length) eng.appendChild(el('p', { class: 'muted', style: 'font-size:12.5px' }, 'در این بازه هنوز چیزی ثبت نشده. آمار از نسخه‌ی 1.22.0 به بعد و فقط وقتی وصل هستید ثبت می‌شود.'));
+    for (const [k, v] of list) eng.appendChild(el('div', { class: 'traffic-eng' }, [el('span', {}, ENGINE_NAMES[k] || k), el('span', {}, `↓ ${fmtBytes(v[0])}  ↑ ${fmtBytes(v[1])}`)]));
+  }
+
+  document.querySelectorAll('#traffic-views .engine-option').forEach((b) => b.addEventListener('click', () => {
+    view = b.dataset.view;
+    document.querySelectorAll('#traffic-views .engine-option').forEach((x) => x.classList.toggle('active', x === b));
+    document.getElementById('traffic-range').hidden = view !== 'range';
+    render();
+  }));
+  fromEl.addEventListener('change', render);
+  toEl.addEventListener('change', render);
+  document.getElementById('traffic-csv').addEventListener('click', () => window.aether.trafficExportCsv(query()));
+  document.getElementById('traffic-reset').addEventListener('click', async () => {
+    if (!(await uiConfirm('همه‌ی آمار مصرف داده پاک شود؟ این کار برگشت ندارد.', { danger: true, okText: 'پاک شود' }))) return;
+    await window.aether.trafficReset();
+    render();
+  });
+  // fresh numbers whenever the tab is opened, and every minute while it is open
+  document.querySelector('[data-tab="traffic"]').addEventListener('click', render);
+  setInterval(() => { if (document.getElementById('tab-traffic').classList.contains('active')) render(); }, 60000);
+  render();
+}
+
 // ---------- Privacy / support the developer (home screen) ----------
 // Paste the addresses here; an empty address shows "coming soon" and no copy button.
 const WALLETS = [
@@ -1889,6 +1967,7 @@ const PRIVACY_FA = `خلاصه: GozarVpn حساب کاربری و ثبت‌نا�
 • کانفیگ‌ها، ساب‌ها، پروفایل‌ها و تنظیمات فقط روی همین کامپیوتر ذخیره می‌شوند.
 • نام کاربری و رمز OpenVPN با رمزنگاری خود ویندوز نگه داشته می‌شود.
 • لاگ در حافظه است و ذخیره نمی‌شود، مگر خودتان کپی یا ذخیره‌اش کنید.
+• آمار مصرف داده (حجم دانلود و آپلود در هر ساعت) فقط روی همین کامپیوتر ثبت می‌شود و جایی فرستاده نمی‌شود.
 
 برنامه خودش به کجاها وصل می‌شود
 • سرورهایی که خودتان انتخاب کرده‌اید و شبکه‌ی موتوری که روشن است (WARP کلودفلر، Tor، سایفون یا OpenVPN).
@@ -1916,6 +1995,7 @@ What stays on your PC
 • Your configs, subscriptions, profiles and settings are stored only on this PC.
 • OpenVPN usernames and passwords are kept encrypted by Windows.
 • The log lives in memory and is not saved unless you copy or save it.
+• Data usage history (download and upload per hour) is kept only on this PC and never sent anywhere.
 
 Where the app itself connects
 • The servers you picked, and the network of the engine you turned on (Cloudflare WARP, Tor, Psiphon or OpenVPN).
@@ -2178,6 +2258,7 @@ async function init() {  state.schema = await window.aether.getEnvSchema();
   await wireTorTab();
   await wirePsiphonTab();
   await wireOpenvpnTab();
+  await wireTrafficTab();
   document.getElementById('open-privacy').addEventListener('click', showPrivacy);
   document.getElementById('open-donate').addEventListener('click', showDonate);
   await wireRoutingCard();

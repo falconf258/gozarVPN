@@ -59,6 +59,7 @@ class GozarVpnService : VpnService() {
         }
         pausedUntil = 0; pausedFor = null; main.removeCallbacks(resumeTask)
         startForeground(NOTIFICATION_ID, buildNotification("در حال اتصال…"))
+        startRecorder()
         autoExclude.clear() // a user-started connect gives every server a fresh chance
         val gen = generation.incrementAndGet()
         worker.execute { connect(gen, retriesLeft = null) }
@@ -156,6 +157,49 @@ class GozarVpnService : VpnService() {
         }.apply { isDaemon = true }.start()
     }
 
+    /* ----------------------------- data usage ----------------------------- */
+
+    @Volatile private var recorderOn = false
+    /** Engine name the history files usage under (set on each connect). */
+    @Volatile private var usageEngine = "singbox"
+
+    /**
+     * Every 15 s while the service runs (connected, paused or blocked): adds this app's own network
+     * bytes (Android's per-app counter, so engines and checks included) and the tunnel bytes
+     * (sing-box's counters) to the local history. Saved every minute and when the service stops.
+     */
+    private fun startRecorder() {
+        if (recorderOn) return
+        recorderOn = true
+        Thread {
+            val log = app.gozarvpn.android.data.TrafficLog.get(applicationContext)
+            val uid = android.os.Process.myUid()
+            var rx = android.net.TrafficStats.getUidRxBytes(uid)
+            var tx = android.net.TrafficStats.getUidTxBytes(uid)
+            var tun: Pair<Long, Long>? = null
+            var lastSave = System.currentTimeMillis()
+            fun step() {
+                val r = android.net.TrafficStats.getUidRxBytes(uid)
+                val t = android.net.TrafficStats.getUidTxBytes(uid)
+                // UNSUPPORTED (-1) or a counter reset (reboot) adds nothing for that step
+                val nd = if (r >= 0 && rx >= 0 && r >= rx) r - rx else 0
+                val nu = if (t >= 0 && tx >= 0 && t >= tx) t - tx else 0
+                rx = r; tx = t
+                val now = app.gozarvpn.android.core.TrafficApi.totals()
+                // a new sing-box (reconnect) restarts its counters; that step is skipped
+                val (td, tu) = tun?.let { last -> if (now != null && now.first >= last.first && now.second >= last.second) (now.first - last.first) to (now.second - last.second) else 0L to 0L } ?: (0L to 0L)
+                tun = now
+                log.add(usageEngine, nd, nu, td, tu)
+                if (System.currentTimeMillis() - lastSave >= 60_000) { runCatching { log.flush() }; lastSave = System.currentTimeMillis() }
+            }
+            while (recorderOn) {
+                runCatching { Thread.sleep(15_000) }
+                runCatching { step() }
+            }
+            runCatching { step(); log.flush() }
+        }.apply { isDaemon = true; name = "usage-recorder" }.start()
+    }
+
     /* ----------------------------- kill switch ----------------------------- */
 
     /** TUN that is never read: everything routed into it is dropped. */
@@ -242,6 +286,7 @@ class GozarVpnService : VpnService() {
             if (settings.routingMode != "all") LogBuffer.add("مسیر ترافیک: " + if (settings.routingMode == "iran") "ایران مستقیم، بقیه از VPN" else "فقط لیست من از VPN")
             // an AmneziaWG entry runs as a child engine like Aether, so our own app must stay outside the TUN
             val awg = entry?.kind == "awg"
+            usageEngine = when { awg -> "awg"; entry?.kind == "openvpn" -> "openvpn"; else -> engineName }
             val split = SingboxConfig.split(settings.perAppMode, settings.perAppPackages, packageName, engineMode = engineName != "singbox" || awg)
             if (settings.perAppMode != "all") LogBuffer.add("تونل‌سازی انتخابی: " + if (split.include.isNotEmpty()) "فقط ${split.include.size} برنامه" else "همه به‌جز ${split.exclude.size} برنامه")
             // an OpenVPN entry: the OpenVPN process gets its tunnel from us directly (no sing-box);
@@ -408,7 +453,7 @@ class GozarVpnService : VpnService() {
 
     private fun shutdown(keepError: Boolean = false) {
         generation.incrementAndGet()
-        watcherOn = false; pausedUntil = 0; pausedFor = null; main.removeCallbacks(resumeTask)
+        watcherOn = false; recorderOn = false; pausedUntil = 0; pausedFor = null; main.removeCallbacks(resumeTask)
         runCatching { worker.execute { stopEngine() } }.onFailure { stopEngine() } // executor gone after onDestroy
         releaseBlock()
         if (!keepError) _state.value = VpnUiState(VpnStatus.Stopped)
@@ -418,6 +463,7 @@ class GozarVpnService : VpnService() {
 
     override fun onRevoke() = shutdown()
     override fun onDestroy() {
+        recorderOn = false // the recorder saves once more on its way out
         generation.incrementAndGet()
         runCatching { worker.execute { stopEngine() } }.onFailure { stopEngine() }
         releaseBlock()

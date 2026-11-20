@@ -678,6 +678,7 @@ fun MoreScreen(vm: AppViewModel, app: AppState, connected: Boolean, onReconnect:
             Hint("نسخه‌ی $version · نسخه‌ی اندروید در حال تکمیل است.")
             Text("این برنامه توسط Ali (hermoso) ساخته و نگه‌داری می‌شود.", fontSize = 13.5.sp)
         }
+        TrafficCard()
         UpdateCard(vm, app)
         RoutingCard(vm, app, connected, onReconnect)
         AutoPauseCard(vm, app)

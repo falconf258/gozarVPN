@@ -1,7 +1,7 @@
 {
   "name": "gozarvpn",
   "productName": "GozarVpn",
-  "version": "1.21.1",
+  "version": "1.22.0",
   "description": "GozarVpn — Windows client for Aether, V2ray/Xray, Clash, Tor and Psiphon",
   "author": "Ali (hermoso)",
   "license": "See LICENSE",

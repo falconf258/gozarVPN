@@ -16,8 +16,8 @@ android {
         applicationId = "app.gozarvpn.android"
         minSdk = 26
         targetSdk = 36
-        versionCode = 27
-        versionName = "0.13.0"
+        versionCode = 28
+        versionName = "0.14.0"
         // Built per CPU: arm64-v8a (ARMv8 64-bit, almost every phone since ~2017) and armeabi-v7a (old 32-bit phones); see splits below
     }
 

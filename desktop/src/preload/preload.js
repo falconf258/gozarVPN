@@ -30,6 +30,9 @@ contextBridge.exposeInMainWorld('aether', {
   downloadAppUpdate: () => ipcRenderer.invoke('app:downloadUpdate'),
   installAppUpdate: () => ipcRenderer.invoke('app:installUpdate'),
   openReleases: () => ipcRenderer.invoke('app:openReleases'),
+  trafficQuery: (q) => ipcRenderer.invoke('traffic:query', q),
+  trafficExportCsv: (q) => ipcRenderer.invoke('traffic:exportCsv', q),
+  trafficReset: () => ipcRenderer.invoke('traffic:reset'),
   appUpdateInfo: () => ipcRenderer.invoke('app:updateInfo'),
   openExternal: (url) => ipcRenderer.invoke('app:openExternal', url),
 

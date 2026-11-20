@@ -55,6 +55,7 @@
     </nav>
     <nav class="subnav" data-group="more" style="display:none">
       <button class="nav-item chip" data-tab="settings">تنظیمات</button>
+      <button class="nav-item chip" data-tab="traffic">مصرف داده</button>
       <button class="nav-item chip" data-tab="update">به‌روزرسانی</button>
       <button class="nav-item chip" data-tab="about">درباره</button>
     </nav>
@@ -520,6 +521,36 @@
             <p class="muted" style="font-size:11.5px;margin:4px 0">از GitHub دانلود می‌شود (اگر مستقیم باز نشد، از داخل اتصال فعلی VPN) و با SHA256SUMS.txt همان نسخه بررسی می‌شود. نسخه‌ی پرتابل نمی‌تواند خودش را عوض کند، پس فایل جدید کنارش ذخیره و نشان داده می‌شود.</p>
             <button id="app-releases" class="btn ghost small">صفحه‌ی انتشارها در GitHub</button>
           </div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-traffic" data-group="more">
+        <div class="card">
+          <h3>مصرف داده</h3>
+          <div class="engine-switch" id="traffic-views">
+            <button class="engine-option active" data-view="hour">۲۴ ساعت</button>
+            <button class="engine-option" data-view="day">۳۰ روز</button>
+            <button class="engine-option" data-view="week">هفتگی</button>
+            <button class="engine-option" data-view="month">ماهانه</button>
+            <button class="engine-option" data-view="range">بازه</button>
+          </div>
+          <div class="traffic-range" id="traffic-range" hidden>
+            <label>از <input type="date" id="traffic-from"></label>
+            <label>تا <input type="date" id="traffic-to"></label>
+          </div>
+          <div class="traffic-totals" id="traffic-totals"></div>
+          <div class="traffic-chart" id="traffic-chart" dir="ltr"></div>
+          <div class="traffic-legend"><span class="sw down"></span> دانلود <span class="sw up"></span> آپلود</div>
+          <div id="traffic-engines"></div>
+          <div class="btn-row">
+            <button id="traffic-csv" class="btn ghost small">ذخیره به‌صورت CSV</button>
+            <button id="traffic-reset" class="btn ghost small danger">پاک کردن آمار</button>
+          </div>
+          <p class="muted" style="font-size:11.5px;line-height:1.8">
+            «اینترنت کامپیوتر» همان چیزی است که اپراتور حساب می‌کند: کل ترافیک کارت شبکه در زمانی که GozarVpn وصل است، با سربار موتور و تست‌های اتصال. اگر برنامه‌های دیگری بیرون از VPN هم کار کنند، آن‌ها هم در این عدد هستند.<br>
+            «داخل تونل» ترافیکی است که برنامه‌ها از خود VPN رد کرده‌اند. این عدد فقط در حالت TUN و OpenVPN اندازه گرفته می‌شود.<br>
+            این آمار فقط روی همین کامپیوتر نگه داشته می‌شود و به هیچ جا فرستاده نمی‌شود.
+          </p>
         </div>
       </section>
 

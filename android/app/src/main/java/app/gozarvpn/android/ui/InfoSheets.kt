@@ -48,6 +48,7 @@ private const val PRIVACY_FA = """
 • کانفیگ‌ها، ساب‌ها، تنظیمات و فهرست برنامه‌هایی که انتخاب کرده‌اید فقط روی همین گوشی ذخیره می‌شوند.
 • نام کاربری و رمز OpenVPN رمزنگاری‌شده نگه داشته می‌شود.
 • لاگ فقط در حافظه است و با بستن برنامه پاک می‌شود، مگر خودتان کپی‌اش کنید.
+• آمار مصرف داده (حجم دانلود و آپلود در هر ساعت) فقط روی همین گوشی ثبت می‌شود و جایی فرستاده نمی‌شود.
 
 برنامه خودش به کجاها وصل می‌شود
 • سرورهایی که خودتان انتخاب کرده‌اید و شبکه‌ی موتوری که روشن است (WARP کلودفلر، Tor، سایفون یا OpenVPN).
@@ -79,6 +80,7 @@ What stays on your phone
 • Your configs, subscriptions, settings and app lists are stored only on this phone.
 • OpenVPN usernames and passwords are kept encrypted.
 • The log lives in memory only and is gone when the app closes, unless you copy it.
+• Data usage history (download and upload per hour) is kept only on this phone and never sent anywhere.
 
 Where the app itself connects
 • The servers you picked, and the network of the engine you turned on (Cloudflare WARP, Tor, Psiphon or OpenVPN).

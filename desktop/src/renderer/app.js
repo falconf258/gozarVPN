@@ -1918,19 +1918,13 @@ async function wireTrafficTab() {
   async function render() {
     let r;
     try { r = await window.aether.trafficQuery(query()); } catch { return; }
-    const [nd, nu, td, tu] = r.total;
+    const [vd, vu, nd, nu] = r.total;
     const box = (title, d, u, wide) => el('div', { class: `tt${wide ? ' wide' : ''}` }, [el('small', {}, title), el('b', {}, fmtBytes(d + u)), el('small', { dir: 'ltr', style: 'display:block;text-align:right' }, `↓ ${fmtBytes(d)}   ↑ ${fmtBytes(u)}`)]);
     const totals = document.getElementById('traffic-totals');
     totals.innerHTML = '';
-    totals.appendChild(box('اینترنت کامپیوتر (کارت شبکه)', nd, nu));
-    totals.appendChild(box('داخل تونل (TUN / OpenVPN)', td, tu));
-    // only hours where the tunnel was measured too, so proxy-mode hours do not inflate it
-    const [pn, pt] = r.paired;
-    if (pn > 0 && pt > 0) {
-      const extra = Math.round((pn / pt - 1) * 100);
-      totals.appendChild(el('div', { class: 'tt wide' }, [el('small', {}, 'سربار: اینترنت مصرفی نسبت به ترافیک داخل تونل (فقط ساعت‌هایی که هر دو اندازه گرفته شده)'), el('b', { dir: 'ltr', style: 'text-align:right' }, `${extra >= 0 ? '+' : ''}${extra}%`)]));
-    }
-    // bars: real network traffic, download stacked under upload
+    totals.appendChild(box('از راه GozarVpn', vd, vu));
+    totals.appendChild(box('کل کارت شبکه (با شبکه‌ی داخلی)', nd, nu));
+    // bars: traffic through GozarVpn, download stacked under upload
     const chart = document.getElementById('traffic-chart');
     chart.innerHTML = '';
     const max = Math.max(1, ...r.rows.map((x) => x.v[0] + x.v[1]));
@@ -1946,7 +1940,7 @@ async function wireTrafficTab() {
     const eng = document.getElementById('traffic-engines');
     eng.innerHTML = '';
     const list = Object.entries(r.engines).sort((a, b) => (b[1][0] + b[1][1]) - (a[1][0] + a[1][1]));
-    if (!list.length) eng.appendChild(el('p', { class: 'muted', style: 'font-size:12.5px' }, 'در این بازه هنوز چیزی ثبت نشده. آمار از نسخه‌ی 1.22.0 به بعد و فقط وقتی وصل هستید ثبت می‌شود.'));
+    if (!list.length) eng.appendChild(el('p', { class: 'muted', style: 'font-size:12.5px' }, 'در این بازه هنوز چیزی ثبت نشده. آمار فقط وقتی وصل هستید ثبت می‌شود.'));
     for (const [k, v] of list) eng.appendChild(el('div', { class: 'traffic-eng' }, [el('span', {}, ENGINE_NAMES[k] || k), el('span', {}, `↓ ${fmtBytes(v[0])}  ↑ ${fmtBytes(v[1])}`)]));
   }
 

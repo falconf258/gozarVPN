@@ -89,7 +89,7 @@ function uiRouting() {
 }
 const systemProxy = new SystemProxy(path.join(app.getPath('userData'), 'system-proxy-backup.json'));
 // data-usage history (hourly, kept only on this PC); written every minute and on quit
-const trafficLog = new TrafficLog(path.join(app.getPath('userData'), 'traffic.json'));
+const trafficLog = new TrafficLog(path.join(app.getPath('userData'), 'traffic-v2.json'));
 setInterval(() => { try { trafficLog.flush(); } catch { /* disk busy: next minute */ } }, 60000).unref();
 const trafficEngine = () => { const e = activeEngine(); return e === 'singbox' && activeV2rayConfig() && activeV2rayConfig().awg ? 'awg' : e; };
 const killSwitch = new KillSwitch(path.join(app.getPath('userData'), 'killswitch-state.json'));
@@ -524,7 +524,10 @@ async function applyRouting(manager, state, ui) {
       if (singboxUpdater.hasSingbox()) {
         try {
           if (routerManager.isRunning()) routerManager.stop();
-          routerManager.start(singboxUpdater.exePath, state.address, { mixedListen: ROUTER_ADDR, routing: r, rulesUserDir });
+          liveStats.api = null;
+          const statsApi = { port: await openvpn.freePort(), secret: crypto.randomBytes(16).toString('hex') };
+          routerManager.start(singboxUpdater.exePath, state.address, { mixedListen: ROUTER_ADDR, routing: r, rulesUserDir, statsApi });
+          liveStats.api = statsApi;
           const ok = await new Promise((resolve) => {
             const t = setTimeout(() => resolve(false), 8000);
             const on = (s) => { if (s.status === 'up') { clearTimeout(t); resolve(true); } else if (!s.running) { clearTimeout(t); resolve(false); } else routerManager.once('status', on); };
@@ -589,7 +592,9 @@ async function startTunOver(manager, socksAddr, ui) {
   }
   try {
     manager.log('info', `[gui] در حال ساخت آداپتور TUN (GozarTun) روی ${socksAddr}…`);
-    tunManager.start(singboxUpdater.exePath, socksAddr, { remoteDns: ui.tunDns || '1.1.1.1', routing: uiRouting(), rulesUserDir });
+    const statsApi = { port: await openvpn.freePort(), secret: crypto.randomBytes(16).toString('hex') };
+    tunManager.start(singboxUpdater.exePath, socksAddr, { remoteDns: ui.tunDns || '1.1.1.1', routing: uiRouting(), rulesUserDir, statsApi });
+    liveStats.api = statsApi;
   } catch (err) {
     manager.log('error', `[gui] TUN start failed: ${err.message}`);
     send('tun:status', { status: 'error', running: false, error: err.message });
@@ -681,9 +686,12 @@ function wireCoreEvents() {
     if (activeEngine() !== 'openvpn') return;
     queueLog(entry);
   });
+  // count only what went through GozarVpn, not LAN copies or apps outside the VPN (see liveStats.js)
+  liveStats.source = () => (activeEngine() === 'openvpn' ? 'tun' : liveStats.api && (tunManager.isRunning() || routerManager.isRunning()) ? 'api' : 'nic');
+  for (const m of [tunManager, routerManager]) m.on('status', (st) => { if (!st.running && !tunManager.isRunning() && !routerManager.isRunning()) liveStats.api = null; });
   liveStats.on('stats', (s) => {
     send('stats:update', s);
-    trafficLog.add(trafficEngine(), { netDown: s.down, netUp: s.up, tunDown: s.tunDown, tunUp: s.tunUp });
+    trafficLog.add(trafficEngine(), { vpnDown: s.down, vpnUp: s.up, nicDown: s.nicDown, nicUp: s.nicUp });
   });
 
   singboxManager.on('status', (state) => {

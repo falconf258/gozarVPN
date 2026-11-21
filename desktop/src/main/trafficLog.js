@@ -1,9 +1,9 @@
 'use strict';
 
-// Local data-usage history: hourly buckets kept in userData/traffic.json and never sent anywhere.
-// Each bucket holds, per engine, [netDown, netUp, tunDown, tunUp] in bytes:
-//   net = the PC's physical network adapters while connected (what the ISP counts)
-//   tun = the tunnel adapter (TUN mode and OpenVPN only), i.e. what apps sent through the VPN.
+// Local data-usage history: hourly buckets kept in userData/traffic-v2.json and never sent anywhere.
+// Each bucket holds, per engine, [vpnDown, vpnUp, nicDown, nicUp] in bytes:
+//   vpn = what apps sent through GozarVpn (tunnel adapter or the router's totals, see liveStats.js)
+//   nic = the PC's physical network adapters while connected, LAN and other apps included.
 
 const fs = require('fs');
 const path = require('path');
@@ -59,10 +59,10 @@ class TrafficLog {
   }
 
   /** Adds byte counts for [engine] to the hour that contains now. */
-  add(engine, { netDown = 0, netUp = 0, tunDown = 0, tunUp = 0 }, now = Date.now()) {
-    if (!(netDown || netUp || tunDown || tunUp)) return;
+  add(engine, { vpnDown = 0, vpnUp = 0, nicDown = 0, nicUp = 0 }, now = Date.now()) {
+    if (!(vpnDown || vpnUp || nicDown || nicUp)) return;
     const key = `${unitStart(now, 'hour')}|${engine || 'other'}`;
-    addTo(this.buckets[key] || (this.buckets[key] = zero()), [netDown, netUp, tunDown, tunUp].map((n) => Math.max(0, Math.round(n))));
+    addTo(this.buckets[key] || (this.buckets[key] = zero()), [vpnDown, vpnUp, nicDown, nicUp].map((n) => Math.max(0, Math.round(n))));
     this.dirty = true;
   }
 
@@ -82,7 +82,7 @@ class TrafficLog {
 
   /**
    * Rows for [from, to) grouped by unit (empty units included, for a continuous chart),
-   * the totals, and the totals per engine. Values are [netDown, netUp, tunDown, tunUp].
+   * the totals, and the totals per engine. Values are [vpnDown, vpnUp, nicDown, nicUp].
    */
   query(from, to, unit) {
     const rows = [];
@@ -90,8 +90,6 @@ class TrafficLog {
     for (let s = unitStart(from, unit); s < to; s = nextUnit(s, unit)) { index.set(s, rows.length); rows.push({ start: s, v: zero() }); }
     const total = zero();
     const engines = {};
-    // [net, tunnel] summed only over hours where the tunnel was measured too (for a fair overhead)
-    const paired = [0, 0];
     for (const [k, v] of Object.entries(this.buckets)) {
       const [ts, engine] = k.split('|');
       const t = Number(ts);
@@ -100,15 +98,14 @@ class TrafficLog {
       if (i !== undefined) addTo(rows[i].v, v);
       addTo(total, v);
       addTo(engines[engine] || (engines[engine] = zero()), v);
-      if (v[2] + v[3] > 0) { paired[0] += v[0] + v[1]; paired[1] += v[2] + v[3]; }
     }
-    return { from, to, unit, rows, total, engines, paired };
+    return { from, to, unit, rows, total, engines };
   }
 
   /** CSV of the hourly records in [from, to): local time, engine and the four counters in bytes. */
   csv(from, to) {
     const pad = (n) => String(n).padStart(2, '0');
-    const lines = ['hour_start_local,engine,net_download_bytes,net_upload_bytes,tunnel_download_bytes,tunnel_upload_bytes'];
+    const lines = ['hour_start_local,engine,vpn_download_bytes,vpn_upload_bytes,network_card_download_bytes,network_card_upload_bytes'];
     for (const k of Object.keys(this.buckets).sort()) {
       const [ts, engine] = k.split('|');
       const t = Number(ts);

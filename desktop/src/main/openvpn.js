@@ -491,4 +491,4 @@ function checkSignature(file) {
   });
 }
 
-module.exports = { runOpenVpn, parseOvpn, buildConfig, cidrToRoute, words, findOpenVpn, versionOf, OpenVpnManager, testProfile, killLeftovers, checkSignature, INSTALLER_URL, INSTALLER_VERSION, cmpVersion, installState };
+module.exports = { freePort, runOpenVpn, parseOvpn, buildConfig, cidrToRoute, words, findOpenVpn, versionOf, OpenVpnManager, testProfile, killLeftovers, checkSignature, INSTALLER_URL, INSTALLER_VERSION, cmpVersion, installState };

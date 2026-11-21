@@ -36,6 +36,7 @@ const DEFAULT_BYPASS_PROCESSES = ['aether.exe', 'sing-box.exe', 'mihomo.exe', 'c
  * opts.routing / opts.rulesUserDir: Iran-direct routing (see routing.js).
  * opts.mixedListen ('127.0.0.1:2080'): build the system-proxy "router" instead: a local
  * HTTP+SOCKS listener applying the same rules in front of the engine, no adapter, no admin.
+ * opts.statsApi ({ port, secret }): a local-only Clash API, read for the byte totals (liveStats.js).
  */
 function buildTunConfig(upstreamSocks, opts = {}) {
   const [host, portStr] = upstreamSocks.split(':');
@@ -45,6 +46,7 @@ function buildTunConfig(upstreamSocks, opts = {}) {
 
   const cfg = {
     log: { level: opts.logLevel || 'warn', timestamp: true },
+    ...(opts.statsApi ? { experimental: { clash_api: { external_controller: `127.0.0.1:${opts.statsApi.port}`, secret: opts.statsApi.secret } } } : {}),
     dns: {
       // New (1.12+) typed DNS server format. DNS queries hijacked from the
       // TUN are answered over DoH *through the tunnel* so the ISP never

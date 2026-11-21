@@ -30,12 +30,32 @@ object AppUpdate {
     const val OWNER = "falconf258"
     const val REPO = "gozarVPN"
     const val RELEASES_PAGE = "https://github.com/$OWNER/$REPO/releases"
-    private const val API = "https://api.github.com/repos/$OWNER/$REPO/releases?per_page=15"
+    // the newest few releases are enough and keep each check small
+    private const val API = "https://api.github.com/repos/$OWNER/$REPO/releases?per_page=5"
 
     data class Found(
         val version: String, val tag: String, val title: String, val notes: String, val prerelease: Boolean,
         val file: String, val url: String, val size: Long, val sumsUrl: String?,
     )
+
+    /**
+     * Asked on every app open; only a reopen within this time reuses the last answer (so quick app
+     * switching does not ask again). A manual check always asks.
+     */
+    const val CHECK_EVERY_MS = 30 * 60_000L
+
+    fun needsCheck(lastCheck: Long, now: Long) = now - lastCheck >= CHECK_EVERY_MS || now < lastCheck
+
+    /** A newer version than the installed one is known (badge on the More tab). */
+    fun hasNewer(latest: String, installed: String) = latest.isNotEmpty() && cmp(latest, installed) > 0
+
+    /** Offer it in a dialog, unless the user chose "don't show again" for exactly this version. */
+    fun shouldPrompt(latest: String, installed: String, skipped: String) = hasNewer(latest, installed) && latest != skipped
+
+    /** Shared between the launch check, the dialog and the update card. */
+    val found = kotlinx.coroutines.flow.MutableStateFlow<Found?>(null)
+    /** Set by the dialog's "update" button: the update card then downloads and installs. */
+    val startDownload = kotlinx.coroutines.flow.MutableStateFlow(false)
 
     fun cmp(a: String, b: String): Int {
         val pa = a.split('.').map { it.toIntOrNull() ?: 0 }

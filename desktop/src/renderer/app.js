@@ -1782,6 +1782,24 @@ async function probeStats() {
 }
 let statsTimer = null;
 function wireLiveStats() {
+  // fourth tile: today's data usage; a click opens More › Data usage
+  const usage = document.getElementById('st-usage');
+  const refreshUsage = async () => {
+    try {
+      const d = new Date(); d.setHours(0, 0, 0, 0);
+      const r = await window.aether.trafficQuery({ view: 'range', from: d.getTime(), to: d.getTime() });
+      usage.textContent = fmtBytes(r.total[0] + r.total[1]);
+    } catch { /* keep the last value */ }
+  };
+  refreshUsage();
+  setInterval(refreshUsage, 30000);
+  const openUsage = () => {
+    document.querySelector('.nav-item[data-tab="more"]').click();
+    document.querySelector('[data-tab="traffic"]').click();
+  };
+  const tile = document.getElementById('st-usage-tile');
+  tile.addEventListener('click', openUsage);
+  tile.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openUsage(); } });
   window.aether.onStats((s) => {
     if (!lastKnownState.running) return;
     document.getElementById('st-down').textContent = `${fmtBytes(s.down)}/s`;

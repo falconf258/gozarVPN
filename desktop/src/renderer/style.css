@@ -470,7 +470,11 @@ input[type=checkbox]:checked::after { transform: translateX(-16px); background: 
 
 /* ---------- Live stats card ---------- */
 .stats-card { padding: 14px 12px 12px; }
-.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.stat-link { cursor: pointer; border-radius: 12px; }
+.stat-link:hover { background: rgba(255,255,255,.04); }
+.stat-link:focus-visible { outline: 2px solid var(--accent, #fb923c); outline-offset: 2px; }
+.stat-ico.usage { color: #f59e0b; background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.28); }
 .stat { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
 .stat b { font-size: 14px; font-weight: 600; direction: ltr; white-space: nowrap; }
 .stat b.good { color: var(--success); } .stat b.warn { color: var(--warn); } .stat b.bad { color: var(--danger); }

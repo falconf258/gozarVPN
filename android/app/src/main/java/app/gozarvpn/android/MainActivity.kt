@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import app.gozarvpn.android.data.AppUpdate
 import app.gozarvpn.android.ui.*
 import app.gozarvpn.android.vpn.GozarVpnService
@@ -56,24 +57,40 @@ class MainActivity : ComponentActivity() {
         LaunchedEffect(message) {
             message?.let { snackbar.showSnackbar(it); vm.consumeMessage() }
         }
-        // a quiet look at GitHub Releases on start; a new version is announced once
+        val installed = remember { runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "0" }
+        // a system permission dialog is on screen: no update dialog on top of it
+        var asking by remember { mutableStateOf(false) }
+        var promptShown by remember { mutableStateOf(false) }
+        var prompt by remember { mutableStateOf<String?>(null) }
+        // On launch and whenever the app comes back to the front: GitHub is asked at most every
+        // few hours (one small request, through the tunnel when GitHub is blocked); failures stay silent.
+        val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
         LaunchedEffect(Unit) {
-            val s = vm.repo.state.value.settings
-            if (!s.autoUpdateCheck) return@LaunchedEffect
-            kotlinx.coroutines.delay(8000)
-            val f = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                runCatching { AppUpdate.check(this@MainActivity, GozarVpnService.state.value.socksPort, s.updateBeta) }.getOrNull()
-            } ?: return@LaunchedEffect
-            if (f.version == vm.repo.state.value.settings.updateSeen) return@LaunchedEffect
-            vm.repo.updateSettings { it.copy(updateSeen = f.version) }
-            snackbar.showSnackbar("نسخه‌ی جدید GozarVpn آماده است: ${f.version} (بیشتر › به‌روزرسانی برنامه)")
+            lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+                val s0 = vm.repo.state.value.settings
+                // the version once found is installed now: no badge any more
+                if (s0.updateLatest.isNotEmpty() && !AppUpdate.hasNewer(s0.updateLatest, installed)) vm.repo.updateSettings { it.copy(updateLatest = "") }
+                if (s0.autoUpdateCheck && AppUpdate.needsCheck(s0.updateLastCheck, System.currentTimeMillis())) {
+                    kotlinx.coroutines.delay(5000)
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        runCatching { AppUpdate.check(this@MainActivity, GozarVpnService.state.value.socksPort, s0.updateBeta) }
+                    }.onSuccess { f ->
+                        promptShown = false // a fresh check may offer it again on this open
+                        AppUpdate.found.value = f
+                        vm.repo.updateSettings { it.copy(updateLatest = f?.version ?: "", updateLastCheck = System.currentTimeMillis()) }
+                    }
+                }
+                val s = vm.repo.state.value.settings
+                if (!promptShown && s.autoUpdateCheck && AppUpdate.shouldPrompt(s.updateLatest, installed, s.updateSkip)) prompt = s.updateLatest
+            }
         }
 
         val startVpn: () -> Unit = { startService(Intent(this, GozarVpnService::class.java)) }
         val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            asking = false
             if (it.resultCode == Activity.RESULT_OK) startVpn()
         }
-        val notifLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+        val notifLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { asking = false }
 
         val onToggle: () -> Unit = {
             if (vpn.status == VpnStatus.Paused) {
@@ -81,9 +98,9 @@ class MainActivity : ComponentActivity() {
             } else if (vpn.status == VpnStatus.Connected || vpn.status == VpnStatus.Starting) {
                 startService(Intent(this, GozarVpnService::class.java).setAction(GozarVpnService.ACTION_STOP))
             } else {
-                if (Build.VERSION.SDK_INT >= 33) notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                if (Build.VERSION.SDK_INT >= 33) { asking = true; notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) }
                 val prepare = VpnService.prepare(this)
-                if (prepare != null) permissionLauncher.launch(prepare) else startVpn()
+                if (prepare != null) { asking = true; permissionLauncher.launch(prepare) } else startVpn()
             }
         }
 
@@ -102,8 +119,15 @@ class MainActivity : ComponentActivity() {
                             Triple("خانه", Icons.Filled.Home, 0), Triple("کانفیگ‌ها", Icons.AutoMirrored.Filled.List, 1),
                             Triple("لاگ", Icons.Filled.Menu, 2), Triple("بیشتر", Icons.Filled.Info, 3),
                         )
+                        // a dot on More while a newer version is known (even after "later" or "don't show again")
+                        val newer = AppUpdate.hasNewer(app.settings.updateLatest, installed)
                         for ((label, icon, i) in items) NavigationBarItem(
-                            tab == i, { tab = i }, { Icon(icon, null) }, label = { Text(label) },
+                            tab == i, { tab = i },
+                            {
+                                if (i == 3 && newer) androidx.compose.material3.BadgedBox(badge = { androidx.compose.material3.Badge() }) { Icon(icon, null) }
+                                else Icon(icon, null)
+                            },
+                            label = { Text(label) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Orange, selectedTextColor = Orange, indicatorColor = Orange.copy(alpha = 0.16f),
                                 unselectedIconColor = Muted, unselectedTextColor = Muted,
@@ -114,7 +138,7 @@ class MainActivity : ComponentActivity() {
             ) { pad ->
                 androidx.compose.animation.Crossfade(tab, label = "tab") { t ->
                     when (t) {
-                        0 -> HomeScreen(vm, app, vpn, onToggle, onReconnect, Modifier.padding(pad))
+                        0 -> HomeScreen(vm, app, vpn, onToggle, onReconnect, Modifier.padding(pad)) { tab = 3 } // data usage is the first card in More
                         1 -> ConfigsHost(vm, app, busy, Modifier.padding(pad))
                         2 -> LogScreen(Modifier.padding(pad))
                         else -> MoreScreen(vm, app, vpn.status == VpnStatus.Connected, onReconnect, Modifier.padding(pad))
@@ -122,5 +146,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        // shown once per session, never over a permission dialog or while a connection is starting
+        val p = prompt
+        if (p != null && !asking && vpn.status != VpnStatus.Starting) UpdateDialog(
+            version = p,
+            notes = AppUpdate.found.collectAsStateWithLifecycle().value?.takeIf { it.version == p }?.notes.orEmpty(),
+            onUpdate = { promptShown = true; prompt = null; AppUpdate.startDownload.value = true; tab = 3 },
+            onLater = { skip -> promptShown = true; prompt = null; if (skip) vm.repo.updateSettings { it.copy(updateSkip = p) } },
+        )
     }
 }

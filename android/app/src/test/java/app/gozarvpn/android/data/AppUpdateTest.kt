@@ -32,6 +32,27 @@ class AppUpdateTest {
         assertNull(AppUpdate.pick(json, "0.12.0", listOf("arm64-v8a"), false))
     }
 
+    @Test fun launchCheckDecisions() {
+        // version order, including the jump from 0.13.x to 0.14.0
+        assertEquals(1, AppUpdate.cmp("0.14.0", "0.13.9"))
+        assertEquals(-1, AppUpdate.cmp("0.13.0", "0.14.0"))
+        // badge: only while something newer than the installed app is known
+        assertEquals(true, AppUpdate.hasNewer("0.14.0", "0.13.0"))
+        assertEquals(false, AppUpdate.hasNewer("0.14.0", "0.14.0"))
+        assertEquals(false, AppUpdate.hasNewer("", "0.13.0"))
+        // "don't show again" covers exactly that version; a newer one is offered again
+        assertEquals(true, AppUpdate.shouldPrompt("0.14.0", "0.13.0", ""))
+        assertEquals(false, AppUpdate.shouldPrompt("0.14.0", "0.13.0", "0.14.0"))
+        assertEquals(true, AppUpdate.shouldPrompt("0.15.0", "0.13.0", "0.14.0"))
+        assertEquals(false, AppUpdate.shouldPrompt("0.14.0", "0.14.0", ""))
+        // every open asks, except a reopen within half an hour (or if the clock went back)
+        val t = 1_700_000_000_000L
+        assertEquals(false, AppUpdate.needsCheck(t, t + 10 * 60_000L))
+        assertEquals(true, AppUpdate.needsCheck(t, t + AppUpdate.CHECK_EVERY_MS))
+        assertEquals(true, AppUpdate.needsCheck(0, t))
+        assertEquals(true, AppUpdate.needsCheck(t, t - 1000))
+    }
+
     @Test fun helpers() {
         assertEquals(1, AppUpdate.cmp("0.10.0", "0.9.9"))
         assertEquals("b".repeat(64), AppUpdate.hashFromSums("${"a".repeat(64)}  x.apk\n${"B".repeat(64)} *y.apk", "y.apk"))

@@ -119,8 +119,11 @@ data class Settings(
     /** App updates from GitHub Releases: check on start, and offer test (pre-release) versions too. */
     val autoUpdateCheck: Boolean = true,
     val updateBeta: Boolean = false,
-    /** Version the start-up check already announced (so it is announced once). */
-    val updateSeen: String = "",
+    /** "Don't show again" was chosen for this version; a newer one is offered again. */
+    val updateSkip: String = "",
+    /** Last time GitHub was asked (millis), and the newest version found then if it was newer than the app. */
+    val updateLastCheck: Long = 0,
+    val updateLatest: String = "",
 )
 
 @Serializable

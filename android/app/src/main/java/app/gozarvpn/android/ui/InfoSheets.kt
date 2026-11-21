@@ -56,7 +56,7 @@ private const val PRIVACY_FA = """
 • نشان دادن IP و کشور خروجی: صفحه‌ی trace کلودفلر، از داخل تونل.
 • لینک سابی که خودتان اضافه کرده‌اید، برای گرفتن و به‌روز کردن کانفیگ‌ها.
 • ساخت WARP رایگان: فقط وقتی دکمه‌اش را بزنید، یک اکانت WARP از کلودفلر گرفته می‌شود.
-• پیدا کردن نسخه‌ی جدید: صفحه‌ی Releaseهای همین پروژه در GitHub. اگر نمی‌خواهید، «بررسی خودکار» را در بیشتر › به‌روزرسانی برنامه خاموش کنید.
+• پیدا کردن نسخه‌ی جدید: هر بار که برنامه باز می‌شود (نه بیشتر از هر نیم ساعت یک بار) فقط شماره‌ی آخرین نسخه از صفحه‌ی Releaseهای همین پروژه در GitHub پرسیده می‌شود و هیچ چیز دیگری فرستاده نمی‌شود. اگر نمی‌خواهید، «بررسی خودکار» را در بیشتر › به‌روزرسانی برنامه خاموش کنید.
 • پل‌های تازه‌ی Tor (از GitHub) وقتی موتور Tor به پل نیاز دارد، و قوانین ایران (از jsDelivr) فقط وقتی دکمه‌ی به‌روزرسانی‌اش را بزنید.
 در هیچ‌کدام از این درخواست‌ها چیزی درباره‌ی شما یا کانفیگ‌هایتان فرستاده نمی‌شود.
 
@@ -88,7 +88,7 @@ Where the app itself connects
 • Showing your exit IP and country: Cloudflare's trace page, through the tunnel.
 • Subscription links you added, to fetch and refresh their configs.
 • Free WARP: only when you press its button, a WARP account is created at Cloudflare.
-• New versions: this project's Releases page on GitHub. Turn off "check automatically" under More › App update if you don't want that.
+• New versions: each time the app opens (not more than once every half hour) it asks this project's Releases page on GitHub for the latest version number, and nothing else is sent. Turn off "check automatically" under More › App update if you don't want that.
 • Fresh Tor bridges (from GitHub) when the Tor engine needs them, and Iran rules (from jsDelivr) only when you press their update button.
 None of these requests send anything about you or your configs.
 

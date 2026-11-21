@@ -54,7 +54,7 @@ val READY_ENGINES = setOf("singbox", "aether", "mihomo", "tor", "psiphon")
 private val EXIT_COUNTRIES = listOf("DE", "NL", "GB", "FR", "US", "CA", "SE", "FI", "AT", "CH", "SG", "JP")
 
 @Composable
-fun HomeScreen(vm: AppViewModel, app: AppState, vpn: VpnUiState, onToggle: () -> Unit, onReconnect: () -> Unit, modifier: Modifier = Modifier) {
+fun HomeScreen(vm: AppViewModel, app: AppState, vpn: VpnUiState, onToggle: () -> Unit, onReconnect: () -> Unit, modifier: Modifier = Modifier, onOpenUsage: () -> Unit = {}) {
     val s = app.settings
     val engine = s.engine
     val busy = vpn.status == VpnStatus.Connected || vpn.status == VpnStatus.Starting
@@ -186,7 +186,7 @@ fun HomeScreen(vm: AppViewModel, app: AppState, vpn: VpnUiState, onToggle: () ->
         }
 
         Spacer(Modifier.height(14.dp))
-        LiveStats(connected, pingMs, pingChecked)
+        LiveStats(connected, pingMs, pingChecked, onOpenUsage)
         Spacer(Modifier.height(10.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             QuickAction(Icons.Filled.Bolt, "تست پینگ", c1, connected, Modifier.weight(1f)) { pingNonce++ }
@@ -301,7 +301,7 @@ private fun QuickAction(icon: ImageVector, text: String, tint: Color, enabled: B
 
 /** Live numbers while connected: ping, down/up speed with session totals. */
 @Composable
-fun LiveStats(connected: Boolean, pingMs: Long?, pingChecked: Boolean) {
+fun LiveStats(connected: Boolean, pingMs: Long?, pingChecked: Boolean, onOpenUsage: () -> Unit = {}) {
     var down by remember { mutableLongStateOf(0L) }
     var up by remember { mutableLongStateOf(0L) }
     var totalDown by remember { mutableLongStateOf(0L) }
@@ -327,6 +327,18 @@ fun LiveStats(connected: Boolean, pingMs: Long?, pingChecked: Boolean) {
             StatCell(Icons.Filled.NetworkCheck, "پینگ", when { !connected -> "—"; !pingChecked -> "…"; pingMs == null -> "✗"; else -> ltr("$pingMs ms") }, null, pingTint, Modifier.weight(1f))
             StatCell(Icons.Filled.ArrowDownward, "دانلود", if (connected) ltr("${fmtBytes(down)}/s") else "—", if (connected) "مجموع ${ltr(fmtBytes(totalDown))}" else null, Color(0xFF38BDF8), Modifier.weight(1f))
             StatCell(Icons.Filled.ArrowUpward, "آپلود", if (connected) ltr("${fmtBytes(up)}/s") else "—", if (connected) "مجموع ${ltr(fmtBytes(totalUp))}" else null, Rose, Modifier.weight(1f))
+            // today's data usage from the local history; a tap opens it
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            var today by remember { mutableLongStateOf(0L) }
+            LaunchedEffect(Unit) {
+                while (true) {
+                    val log = app.gozarvpn.android.data.TrafficLog.get(ctx)
+                    val start = app.gozarvpn.android.data.TrafficLog.unitStart(System.currentTimeMillis(), app.gozarvpn.android.data.TrafficLog.Span.DAY)
+                    today = withContext(Dispatchers.IO) { log.query(start, start + 86_400_000L, app.gozarvpn.android.data.TrafficLog.Span.DAY).total.let { it[0] + it[1] } }
+                    delay(30_000)
+                }
+            }
+            StatCell(Icons.Filled.BarChart, "مصرف داده", ltr(fmtBytes(today)), "امروز", Color(0xFFF59E0B), Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).clickable(onClick = onOpenUsage))
         }
     }
 }

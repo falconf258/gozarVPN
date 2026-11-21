@@ -391,26 +391,26 @@ class GozarVpnService : VpnService() {
 
     /**
      * Periodic real request through the tunnel (or the engine's SOCKS port, since our own app
-     * is outside the TUN in engine modes). After 10 misses in a row: Auto switches server,
-     * a manual pick only gets a warning (the user's choice always wins).
+     * is outside the TUN in engine modes). After [HEALTH_MISSES] misses in a row (one miss never
+     * acts): Auto switches server, a manual pick only gets a warning (the user's choice always wins).
      */
     private fun watchHealth(gen: Int, engineName: String, auto: Boolean, label: String, port: Int?) {
         Thread {
             var misses = 0
             while (generation.get() == gen) {
-                Thread.sleep(6000)
+                Thread.sleep(HEALTH_INTERVAL_MS)
                 if (generation.get() != gen) return@Thread
                 val ok = (if (port != null) ProxyCores.probeSocks(port, timeoutMs = 8000) else app.gozarvpn.android.data.Tester.probeTunnel()) != null
                 if (ok) {
-                    if (misses >= 10) setState(_state.value.copy(warning = null), label)
+                    if (misses >= HEALTH_MISSES) setState(_state.value.copy(warning = null), label)
                     misses = 0; continue
                 }
                 misses++
-                if (misses == 10) {
+                if (misses == HEALTH_MISSES) {
                     val repo = Repo.get(applicationContext)
                     if (engineName == "singbox" && auto) {
                         repo.state.value.activeId?.let { autoExclude.add(it) }
-                        LogBuffer.add("سرور فعلی ۱۰ بار پشت سر هم جواب نداد؛ سرور عوض شد")
+                        LogBuffer.add("سرور فعلی $HEALTH_MISSES بار پشت سر هم جواب نداد؛ سرور عوض شد")
                         val next = generation.incrementAndGet()
                         runCatching { worker.execute { connect(next, retriesLeft = null) } }
                         return@Thread
@@ -504,6 +504,13 @@ class GozarVpnService : VpnService() {
         const val ACTION_PAUSE = "app.gozarvpn.android.PAUSE"
         const val ACTION_RESUME = "app.gozarvpn.android.RESUME"
         const val EXTRA_MINUTES = "minutes"
+        /**
+         * Tunnel health check: one small HTTPS request (~7 KB on the wire) every 18 s, about
+         * 1.4 MB an hour (it was every 6 s, ~4 MB/h). Acting after 4 misses in a row keeps the
+         * reaction time near what it was (~70 s) while a single miss never does anything.
+         */
+        const val HEALTH_INTERVAL_MS = 18_000L
+        const val HEALTH_MISSES = 4
         private val ENGINE_LABELS = mapOf("singbox" to "V2ray", "aether" to "Aether", "tor" to "Tor", "mihomo" to "Clash", "psiphon" to "سایفون")
         private const val CHANNEL_ID = "vpn"
         private const val NOTIFICATION_ID = 1

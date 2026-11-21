@@ -433,7 +433,7 @@ fun V2rayScreen(vm: AppViewModel, app: AppState, busy: Boolean) {
             GCard {
                 SettingSwitch(
                     "انتخاب خودکار",
-                    "موقع اتصال سریع‌ترین سرور سالم انتخاب می‌شود و اگر ۱۰ بار پشت سر هم جواب ندهد، سرور خودکار عوض می‌شود. اگر خودتان روی سروری بزنید، همان انتخاب می‌شود و این گزینه خاموش می‌شود.",
+                    "موقع اتصال سریع‌ترین سرور سالم انتخاب می‌شود و اگر حدود یک دقیقه جواب ندهد، سرور خودکار عوض می‌شود. اگر خودتان روی سروری بزنید، همان انتخاب می‌شود و این گزینه خاموش می‌شود.",
                     app.settings.v2rayAuto,
                 ) { v -> vm.repo.updateSettings { it.copy(v2rayAuto = v) } }
             }
@@ -677,6 +677,13 @@ fun MoreScreen(vm: AppViewModel, app: AppState, connected: Boolean, onReconnect:
             H("GozarVpn")
             Hint("نسخه‌ی $version · نسخه‌ی اندروید در حال تکمیل است.")
             Text("این برنامه توسط Ali (hermoso) ساخته و نگه‌داری می‌شود.", fontSize = 13.5.sp)
+        }
+        // a newer version is known: a clear row on top that starts the update
+        if (AppUpdate.hasNewer(app.settings.updateLatest, version)) GCard {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("✨ نسخه‌ی جدید ${app.settings.updateLatest} آماده است", fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Button({ AppUpdate.startDownload.value = true }) { Text("به‌روزرسانی") }
+            }
         }
         TrafficCard()
         UpdateCard(vm, app)

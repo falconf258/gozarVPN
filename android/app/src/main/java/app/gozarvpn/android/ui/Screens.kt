@@ -675,7 +675,7 @@ fun MoreScreen(vm: AppViewModel, app: AppState, connected: Boolean, onReconnect:
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         GCard {
             H("GozarVpn")
-            Hint("نسخه‌ی $version · نسخه‌ی اندروید در حال تکمیل است.")
+            Hint("نسخه‌ی $version · رایگان و متن‌باز")
             Text("این برنامه توسط Ali (hermoso) ساخته و نگه‌داری می‌شود.", fontSize = 13.5.sp)
         }
         // a newer version is known: a clear row on top that starts the update
